@@ -9,15 +9,17 @@ records the React + TypeScript + Vite change from the proposed Next.js frontend.
 4. Python indexing and source browsing — implemented; user reported local validation complete.
 5. Hybrid search and benchmark — implemented; user reported completion of local validation.
 6. Grounded Q&A — implemented; user reported local completion.
-7. Streaming MVP — implementation complete; final local acceptance pending:
+7. Streaming MVP — implemented; user reported local completion:
    - 7A: saved conversations/messages and source snapshots — implemented; user reported local completion.
    - 7B: durable background answer runs, idempotent submission, cancellation, completed
      usage and polling/reload recovery — implemented; user reported local completion.
    - 7C1: bounded, frozen conversation context — implemented; user reported local completion.
    - 7C2A: durable lifecycle timeline, authenticated SSE reconnect/replay — implemented; user reported local completion.
    - 7C2B: real provider text streaming and provisional-answer UI — implemented; user reported local completion.
-   - 7C3: durable generation/query-embedding receipts, React usage UI and final MVP acceptance procedure — implemented; infrastructure/browser acceptance pending.
-8. Read-only investigation agent — typed tools, bounded loops, action timeline.
+   - 7C3: durable generation/query-embedding receipts, React usage UI and final MVP acceptance procedure — implemented; user reported local completion.
+8. Read-only investigation agent — implemented: typed tools, five-call bounded loop,
+   durable jobs/usage/events, SSE timeline, source-backed answers and evaluation fixtures.
+   Local infrastructure/browser/live-model acceptance pending; see milestone-8.md.
 9. Plans and patch proposals — pinned base, safe patch application, diff inspection.
 10. Isolated execution — separate security boundary, curated test environments.
 11. Bounded repair loop and coding benchmark.

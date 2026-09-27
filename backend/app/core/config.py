@@ -25,6 +25,8 @@ class Settings(BaseSettings):
             raise ValueError("must be a redis:// or rediss:// connection URL")
         return value
 
+    agents_enabled: bool = False
+    agent_daily_request_limit: int = Field(default=20, ge=1, le=1000)
     answers_enabled: bool = False
     # Use a pinned, structured-output-capable snapshot; evaluate before changing it.
     answer_model: str = Field(default="gpt-4.1-mini-2025-04-14", pattern=r"^[a-zA-Z0-9._-]{1,100}$")
@@ -40,10 +42,10 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def embedding_configuration(self) -> "Settings":
-        if (self.embeddings_enabled or self.answers_enabled) and (
+        if (self.embeddings_enabled or self.answers_enabled or self.agents_enabled) and (
             self.openai_api_key is None or not self.openai_api_key.get_secret_value().strip()
         ):
-            raise ValueError("enabled embeddings or answers require APP_OPENAI_API_KEY")
+            raise ValueError("enabled embeddings, answers or agents require APP_OPENAI_API_KEY")
         return self
 
     environment: Literal["development", "production", "test"] = "development"

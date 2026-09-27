@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from app.core.config import Settings
 from app.core.logging import configure_logging
 from app.database.session import create_engine
+from app.jobs.agent_dispatcher import dispatch_agents
 from app.jobs.answer_dispatcher import dispatch_answers
 from app.models import ImportJob, RepositoryIndex, SearchIndex
 
@@ -102,6 +103,9 @@ async def main() -> None:
     async def publish_answer(run_id: UUID) -> None:
         await asyncio.to_thread(celery_app.send_task, "repopilot.answer_run", args=[str(run_id)])
 
+    async def publish_agent(run_id: UUID) -> None:
+        await asyncio.to_thread(celery_app.send_task, "repopilot.agent_run", args=[str(run_id)])
+
     try:
         while True:
             try:
@@ -109,6 +113,7 @@ async def main() -> None:
                 await dispatch_once(factory, publish_index, RepositoryIndex)
                 await dispatch_once(factory, publish_search, SearchIndex)
                 await dispatch_answers(factory, publish_answer)
+                await dispatch_agents(factory, publish_agent)
             except Exception as exc:
                 logger.error("dispatch_cycle_failed", extra={"error_type": type(exc).__name__})
             await asyncio.sleep(settings.dispatcher_interval_seconds)

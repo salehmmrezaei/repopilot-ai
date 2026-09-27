@@ -9,6 +9,7 @@ import {
   type Conversation,
 } from './api';
 import { ConversationTranscript } from './ConversationTranscript';
+import { AgentPanel } from '../agent/AgentPanel';
 interface Props {
   repositoryId: string;
   csrf: string;
@@ -226,6 +227,14 @@ export function ConversationWorkspace({
           csrf={csrf}
           onExpired={onExpired}
           onBusy={setAnswerBusy}
+        />
+      )}
+      {selected && (
+        <AgentPanel
+          key={`agent-${selected.id}`}
+          conversationId={selected.id}
+          csrf={csrf}
+          onExpired={onExpired}
         />
       )}
     </section>
