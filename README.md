@@ -1,7 +1,7 @@
 # RepoPilot AI
 
 A repository-understanding application that will grow into a controlled software
-engineering agent. **Current scope: Milestone 7, repository-understanding MVP implemented; final local acceptance pending.**
+engineering agent. **Current scope: Milestone 8, read-only repository investigations implemented.**
 React/TypeScript/Vite, FastAPI, PostgreSQL/pgvector, Redis, Celery, and a durable
 job dispatcher now support authenticated imports, progress, and basic source browsing.
 Static indexing, a React source/search inspector, keyword/symbol retrieval and optional
@@ -12,10 +12,12 @@ still require current source evidence. Run-state events now stream over SSE with
 Background answers now stream provisional text. Only completed, validated responses
 enter saved history. Per-call receipts retain known generation/query-embedding usage even
 when publication fails or is cancelled. Unknown calls are never represented as free.
-Milestone 8 agents have not been started.
+A bounded investigation agent can choose repository search/read/symbol/reference tools,
+show a public action plan and durable activity timeline, and return source-backed findings.
+No code execution or modifications are available. Milestone 9 has not been started.
 
-**Upgrading from Milestone 7C2B?** Follow [the Milestone 7 completion guide](docs/milestone-7c3.md).
-Use [the MVP acceptance checklist](docs/mvp-acceptance.md) before advancing.
+**Upgrading from the completed Milestone 7 release?** Follow [the Milestone 8 guide](docs/milestone-8.md).
+Milestone 7 was reported complete by the user. Milestone 8 acceptance is documented separately.
 It preserves your existing `.env`, users, sessions, and PostgreSQL volume.
 
 ## Requirements
@@ -60,7 +62,7 @@ docker compose run --rm migrate alembic current
 ```
 
 Each HTTP call should return 200 and `{"status":"ok","service":"repopilot-api"}`.
-The migration should report `0011_usage_receipts (head)`.
+The migration should report `0012_investigations (head)`.
 The frontend proxy and direct API checks deliberately use different URL prefixes.
 
 ## Verify dependency failure and recovery

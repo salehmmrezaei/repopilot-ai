@@ -163,3 +163,59 @@ def answer_run(run_id: str) -> None:
         logging.getLogger("repopilot.worker").error(
             "answer_task_failed", extra={"job_id": run_id, "error_type": type(exc).__name__}
         )
+
+
+async def execute_agent(run_id: UUID) -> None:
+    from redis.asyncio import Redis
+    from sqlalchemy.ext.asyncio import AsyncSession
+
+    from app.agents.provider import OpenAIAgent
+    from app.agents.tools import RepositoryTools
+    from app.core.rate_limits import RedisRateLimiter
+    from app.jobs.agent_run import run_agent
+    from app.retrieval.postgres import PostgresCandidates
+    from app.services.search import SearchService
+
+    engine = create_engine(settings)
+    redis = Redis.from_url(
+        settings.redis_url.get_secret_value(),
+        socket_timeout=2,
+        socket_connect_timeout=2,
+        decode_responses=True,
+    )
+    try:
+        async with httpx.AsyncClient(trust_env=False, follow_redirects=False) as client:
+            limiter = RedisRateLimiter(redis)
+
+            def build(
+                db: AsyncSession, user_id: UUID, repository_id: UUID, index_id: UUID
+            ) -> RepositoryTools:
+                return RepositoryTools(
+                    db,
+                    SearchService(db, PostgresCandidates(db), limiter, settings, None),
+                    user_id,
+                    repository_id,
+                    index_id,
+                )
+
+            await run_agent(
+                async_sessionmaker(engine, expire_on_commit=False),
+                run_id,
+                settings,
+                OpenAIAgent(client, settings),
+                build,
+            )
+    finally:
+        await redis.aclose()
+        await engine.dispose()
+
+
+@celery_app.task(name="repopilot.agent_run")  # type: ignore[untyped-decorator]
+def agent_run(run_id: str) -> None:
+    configure_logging()
+    try:
+        asyncio.run(execute_agent(UUID(run_id)))
+    except Exception as exc:
+        logging.getLogger("repopilot.worker").error(
+            "agent_task_failed", extra={"job_id": run_id, "error_type": type(exc).__name__}
+        )

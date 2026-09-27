@@ -275,3 +275,37 @@ its presence is not evidence that it ran. Follow milestone-7c3.md and mvp-accept
 
 Accounting scope is background generation and query embedding, not full invoice
 reconciliation or indexing/standalone-call accounting. Unknown receipt cost is never zero.
+
+## Milestone 8 — read-only investigation agent
+
+Milestone 7 was reported complete by the user. Milestone 8 implementation is delivered;
+local infrastructure, browser and live-provider acceptance remain pending.
+
+Verified here on 2026-09-27:
+
+- Full backend suite: 234 passed, eight infrastructure tests skipped, two existing
+  upstream Starlette/AnyIO deprecation warnings. Ruff lint/format pass; strict mypy
+  passes all 137 application modules.
+- Agent coverage includes typed tool/path restrictions, source ownership and pinning,
+  bounded/repeated tool calls, citation validation, cancellation fencing, duplicate
+  worker delivery, durable events/replay, usage preservation and failed publication.
+- Frontend TypeScript/ESLint/Prettier pass; 55 tests across 12 files pass. Agent tests
+  exercise event replay, receipt display, source escaping and idempotent submission retries.
+- Production bundling with `pnpm exec vite build --minify=false` passes. Standard
+  `pnpm build` fails with native Bus error (exit 135) after transforming 146 modules.
+  The preceding investigation reproduced this on the unchanged Milestone 7 baseline.
+  The normal build configuration remains unchanged. A successful standard minified
+  build is an outstanding Docker/CI acceptance gate, not a verified result here.
+- Offline PostgreSQL migration SQL generates through 0012_investigations. This does
+  not establish real migration execution, schema drift or concurrent locking behavior.
+- Four versioned agent evaluation fixtures validate with zero provider calls. Dataset
+  SHA-256: d1f0c4b1615b37b857f813249039891d96bf2774c98e9d736e031a9fce9578a1.
+- The exact upgrade patch is checked/applied to the delivered Milestone 7C3 archive,
+  and resulting source is compared with the final distribution. The ZIP is integrity-tested.
+
+Not executed here: Docker image builds/startup, actual PostgreSQL/Redis/Celery tests,
+manual browser/proxy acceptance, actual CI or paid model evaluation. Eight infrastructure
+checks include the new duplicate-agent-delivery PostgreSQL race test. No paid calls or
+live quality scores are claimed. Follow milestone-8.md for those acceptance steps.
+
+Milestone 9 patch proposals and Milestone 10 execution remain outside this release.

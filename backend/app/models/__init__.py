@@ -1,3 +1,4 @@
+from app.models.agent import AgentCall, AgentEvent, AgentRun
 from app.models.answer_run import AnswerRun
 from app.models.code import CodeChunk, CodeSymbol
 from app.models.conversation import Conversation, Message
@@ -13,6 +14,9 @@ from app.models.usage_receipt import UsageReceipt
 from app.models.user import User
 
 __all__ = [
+    "AgentRun",
+    "AgentEvent",
+    "AgentCall",
     "UsageReceipt",
     "Conversation",
     "Message",
