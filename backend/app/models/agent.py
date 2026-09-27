@@ -31,6 +31,7 @@ class AgentRun(Base):
             postgresql_where=text("status IN ('queued','running')"),
             sqlite_where=text("status IN ('queued','running')"),
         ),
+        CheckConstraint("mode IN ('investigate','propose')", name="ck_agent_mode"),
         Index("ix_agent_dispatch", "status", "created_at"),
         CheckConstraint(
             "status IN ('queued','running','completed','failed','cancelled')",
@@ -43,6 +44,7 @@ class AgentRun(Base):
     )
     request_key: Mapped[UUID]
     question: Mapped[str] = mapped_column(Text)
+    mode: Mapped[str] = mapped_column(String(20), server_default="investigate")
     source_index_id: Mapped[UUID]
     commit_sha: Mapped[str] = mapped_column(String(40))
     config_hash: Mapped[str] = mapped_column(String(64))

@@ -2,6 +2,7 @@ from typing import Literal, Protocol
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from app.agents.proposals import ProposalDraft, VerifiedProposal
 from app.generation.contracts import AnswerDraft
 from app.schemas.search import Evidence
 
@@ -51,9 +52,23 @@ class Decision(BaseModel):
         return self
 
 
+class ProposalDecision(Decision):
+    proposal: ProposalDraft | None
+
+    @model_validator(mode="after")
+    def proposal_shape(self) -> "ProposalDecision":
+        if self.action is not None and self.proposal is not None:
+            raise ValueError("Tool actions cannot publish proposals")
+        if self.answer is not None and (
+            (self.answer.status == "answered") != (self.proposal is not None)
+        ):
+            raise ValueError("Answered proposal runs require edits; abstentions have none")
+        return self
+
+
 class StepResult(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
-    decision: Decision
+    decision: Decision | ProposalDecision
     input_tokens: int = Field(ge=0, le=100000)
     output_tokens: int = Field(ge=0, le=2000)
 
@@ -61,6 +76,7 @@ class StepResult(BaseModel):
 class InvestigationResult(BaseModel):
     answer: AnswerDraft
     evidence: list[Evidence]
+    proposal: VerifiedProposal | None = None
 
 
 class AgentProvider(Protocol):

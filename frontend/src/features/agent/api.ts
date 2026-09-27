@@ -14,6 +14,7 @@ const runSchema = z.object({
   conversation_id: z.string(),
   request_key: z.string(),
   question: z.string(),
+  mode: z.enum(['investigate', 'propose']).default('investigate'),
   source_index_id: z.string(),
   commit_sha: z.string(),
   model: z.string(),
@@ -33,6 +34,27 @@ const runSchema = z.object({
         limitation: z.string(),
       }),
       evidence: z.array(evidence),
+      proposal: z
+        .object({
+          implementation_plan: z.array(z.string()).max(6),
+          risks: z.array(z.string()).max(5),
+          test_plan: z.array(z.string()).max(6),
+          files: z
+            .array(
+              z.object({
+                path: z.string(),
+                operation: z.enum(['replace', 'create', 'delete']),
+                before_sha256: z.string().nullable(),
+                after_sha256: z.string().nullable(),
+              }),
+            )
+            .max(4),
+          diff: z.string().max(65536),
+          diff_sha256: z.string(),
+          validation: z.literal('source_checked_tests_not_run'),
+        })
+        .nullable()
+        .default(null),
     })
     .nullable(),
 });
@@ -68,6 +90,7 @@ export type AgentEvent = z.infer<typeof eventSchema>;
 export interface Submission {
   request_key: string;
   question: string;
+  mode: 'investigate' | 'propose';
 }
 export async function listAgents(id: string, signal: AbortSignal) {
   return z.object({ enabled: z.boolean(), items: z.array(runSchema) }).parse(

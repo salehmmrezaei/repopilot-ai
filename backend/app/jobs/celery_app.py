@@ -173,6 +173,7 @@ async def execute_agent(run_id: UUID) -> None:
     from app.agents.tools import RepositoryTools
     from app.core.rate_limits import RedisRateLimiter
     from app.jobs.agent_run import run_agent
+    from app.models import AgentRun
     from app.retrieval.postgres import PostgresCandidates
     from app.services.search import SearchService
 
@@ -198,11 +199,17 @@ async def execute_agent(run_id: UUID) -> None:
                     index_id,
                 )
 
+            factory = async_sessionmaker(engine, expire_on_commit=False)
+            async with factory() as db:
+                run = await db.get(AgentRun, run_id)
+                if run is None:
+                    return
+                mode = run.mode
             await run_agent(
-                async_sessionmaker(engine, expire_on_commit=False),
+                factory,
                 run_id,
                 settings,
-                OpenAIAgent(client, settings),
+                OpenAIAgent(client, settings, mode),
                 build,
             )
     finally:

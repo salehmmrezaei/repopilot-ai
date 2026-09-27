@@ -11,6 +11,7 @@ from app.agents.contracts import InvestigationResult
 class AgentRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     request_key: UUID
+    mode: Literal["investigate", "propose"] = "investigate"
     question: str = Field(min_length=1, max_length=512, pattern=r"\S")
 
 
@@ -20,6 +21,7 @@ class AgentResponse(BaseModel):
     conversation_id: UUID
     request_key: UUID
     question: str
+    mode: Literal["investigate", "propose"]
     source_index_id: UUID
     commit_sha: str
     model: str

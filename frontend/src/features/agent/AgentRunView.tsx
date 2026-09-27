@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { ApiError } from '../../lib/api/http';
 import { cancelAgent, getAgent, type AgentDetail } from './api';
 import { consumeAgentEvents } from './events';
+import { ProposalView } from './ProposalView';
 export function AgentRunView({
   runId,
   csrf,
@@ -119,6 +120,7 @@ export function AgentRunView({
         <>
           <h5>{data.run.question}</h5>
           <p>
+            {data.run.mode === 'propose' ? 'Patch proposal' : 'Investigation'} ·
             Status: {data.run.status} · Model: {data.run.model}
           </p>
           <p className="field-help">Pinned commit: {data.run.commit_sha}</p>
@@ -176,6 +178,15 @@ export function AgentRunView({
               {data.run.result.answer.limitation && (
                 <p>{data.run.result.answer.limitation}</p>
               )}
+              {data.run.result.proposal &&
+                data.run.mode === 'propose' &&
+                data.run.status === 'completed' && (
+                  <ProposalView
+                    runId={runId}
+                    commit={data.run.commit_sha}
+                    proposal={data.run.result.proposal}
+                  />
+                )}
               {data.run.result.evidence.map((item) => (
                 <details
                   key={item.citation_id}

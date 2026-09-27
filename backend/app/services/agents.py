@@ -68,7 +68,7 @@ class AgentService:
             )
         )
         if previous:
-            if previous.question != data.question.strip():
+            if previous.question != data.question.strip() or previous.mode != data.mode:
                 raise AppError(
                     "idempotency_conflict", "Request key already used for another task.", 409
                 )
@@ -111,9 +111,10 @@ class AgentService:
             conversation_id=conversation_id,
             request_key=data.request_key,
             question=data.question.strip(),
+            mode=data.mode,
             source_index_id=source.id,
             commit_sha=source.commit_sha,
-            config_hash=configuration(self.settings),
+            config_hash=configuration(self.settings, data.mode),
             model=self.settings.answer_model,
         )
         self.db.add(run)

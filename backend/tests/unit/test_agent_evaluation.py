@@ -1,13 +1,15 @@
 import asyncio
 
+import pytest
 from pydantic import TypeAdapter
 
 from app.agents.contracts import ToolInput
-from app.evaluation.agents import DEFAULT, Case, FixtureTools
+from app.evaluation.agents import DEFAULT, PROPOSAL_DEFAULT, Case, FixtureTools
 
 
-def test_versioned_agent_cases_are_executable_without_provider_calls():
-    cases = TypeAdapter(list[Case]).validate_json(DEFAULT.read_bytes())
+@pytest.mark.parametrize("dataset", [DEFAULT, PROPOSAL_DEFAULT])
+def test_versioned_agent_cases_are_executable_without_provider_calls(dataset):
+    cases = TypeAdapter(list[Case]).validate_json(dataset.read_bytes())
     assert len(cases) == 4 and len({case.id for case in cases}) == 4
 
     async def exercise():

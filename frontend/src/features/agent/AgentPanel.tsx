@@ -17,6 +17,7 @@ export function AgentPanel({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [question, setQuestion] = useState('');
+  const [mode, setMode] = useState<'investigate' | 'propose'>('investigate');
   const [selected, setSelected] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [pending, setPending] = useState<Submission | null>(null);
@@ -64,6 +65,7 @@ export function AgentPanel({
     const request = pending ?? {
       request_key: crypto.randomUUID(),
       question: question.trim(),
+      mode,
     };
     setPending(request);
     setBusy(true);
@@ -98,11 +100,12 @@ export function AgentPanel({
   const visible = selected ?? items[0]?.id;
   return (
     <section className="index-inspector" aria-label="Read-only investigations">
-      <h4>Investigate the repository</h4>
+      <h4>Investigate or propose changes</h4>
       <p>
         The agent can search code, read files, find symbols and locate literal
-        references. Up to five paid model calls; no code execution or
-        modifications. Repository evidence is sent to the configured provider.
+        references, then suggest an implementation plan and patch. Up to five
+        paid model calls. Patches are review drafts; code is never applied or
+        executed. Repository evidence is sent to the configured provider.
       </p>
       {loading && <p role="status">Loading investigations…</p>}
       {!loading && !enabled && (
@@ -113,6 +116,18 @@ export function AgentPanel({
           void submit(event);
         }}
       >
+        <label htmlFor={`${id}-mode`}>Task type</label>
+        <select
+          id={`${id}-mode`}
+          value={pending?.mode ?? mode}
+          disabled={busy || !!pending || active}
+          onChange={(event) =>
+            setMode(event.target.value as 'investigate' | 'propose')
+          }
+        >
+          <option value="investigate">Read-only investigation</option>
+          <option value="propose">Implementation plan and patch</option>
+        </select>
         <label htmlFor={`${id}-task`}>Investigation task</label>
         <textarea
           id={`${id}-task`}
@@ -136,7 +151,9 @@ export function AgentPanel({
             ? 'Queuing…'
             : pending
               ? 'Retry same investigation'
-              : 'Start investigation'}
+              : mode === 'propose'
+                ? 'Generate patch proposal'
+                : 'Start investigation'}
         </button>
       </form>
       {error && <p role="alert">{error}</p>}
@@ -151,6 +168,7 @@ export function AgentPanel({
           >
             {items.map((run) => (
               <option key={run.id} value={run.id}>
+                {run.mode === 'propose' ? 'Proposal' : 'Investigation'} ·{' '}
                 {run.status} · {run.question}
               </option>
             ))}

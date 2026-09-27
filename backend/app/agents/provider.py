@@ -6,7 +6,7 @@ from pathlib import Path
 
 import httpx
 
-from app.agents.contracts import Decision, StepResult
+from app.agents.contracts import Decision, ProposalDecision, StepResult
 from app.core.config import Settings
 from app.core.errors import AppError
 from app.core.provider_usage import ProviderUsageError
@@ -16,7 +16,10 @@ INSTRUCTIONS = (Path(__file__).parent / "prompts/investigation_v1.txt").read_tex
 PROMPT_HASH = sha256(INSTRUCTIONS.encode()).hexdigest()
 
 
-def configuration(settings: Settings) -> str:
+PROPOSAL_INSTRUCTIONS = (Path(__file__).parent / "prompts/proposal_v1.txt").read_text()
+
+
+def configuration(settings: Settings, mode: str = "investigate") -> str:
     value = [
         PROMPT_HASH,
         settings.answer_model,
@@ -27,12 +30,18 @@ def configuration(settings: Settings) -> str:
         5,
         8000,
     ]
+    if mode == "propose":
+        value.extend(["proposal-v1", sha256(PROPOSAL_INSTRUCTIONS.encode()).hexdigest()])
     return sha256(json.dumps(value).encode()).hexdigest()
 
 
 class OpenAIAgent:
-    def __init__(self, client: httpx.AsyncClient, settings: Settings) -> None:
+    def __init__(
+        self, client: httpx.AsyncClient, settings: Settings, mode: str = "investigate"
+    ) -> None:
         self.client, self.settings = client, settings
+        self.schema = ProposalDecision if mode == "propose" else Decision
+        self.instructions = PROPOSAL_INSTRUCTIONS if mode == "propose" else INSTRUCTIONS
 
     async def decide(self, payload: str) -> StepResult:
         key = self.settings.openai_api_key
@@ -46,7 +55,7 @@ class OpenAIAgent:
                 headers={"Authorization": "Bearer " + key.get_secret_value()},
                 json={
                     "model": self.settings.answer_model,
-                    "instructions": INSTRUCTIONS,
+                    "instructions": self.instructions,
                     "input": [{"role": "user", "content": payload}],
                     "store": False,
                     "tools": [],
@@ -56,7 +65,7 @@ class OpenAIAgent:
                             "type": "json_schema",
                             "name": "investigation_decision",
                             "strict": True,
-                            "schema": Decision.model_json_schema(),
+                            "schema": self.schema.model_json_schema(),
                         }
                     },
                 },
@@ -96,7 +105,7 @@ class OpenAIAgent:
             ):
                 raise ValueError("Model refused or returned unsupported output")
             return StepResult(
-                decision=Decision.model_validate_json(item.content[0].text or ""),
+                decision=self.schema.model_validate_json(item.content[0].text or ""),
                 input_tokens=usage.input_tokens,
                 output_tokens=usage.output_tokens,
             )

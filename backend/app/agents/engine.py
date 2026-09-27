@@ -5,7 +5,14 @@ from collections.abc import Awaitable, Callable
 from time import perf_counter
 from typing import Protocol
 
-from app.agents.contracts import AgentProvider, InvestigationResult, StepResult, ToolInput
+from app.agents.contracts import (
+    AgentProvider,
+    InvestigationResult,
+    ProposalDecision,
+    StepResult,
+    ToolInput,
+)
+from app.agents.proposals import ProposalDraft, VerifiedProposal
 from app.agents.provider import INSTRUCTIONS
 from app.core.errors import AppError
 from app.core.provider_usage import ProviderUsageError
@@ -31,6 +38,9 @@ async def investigate(
     provider: AgentProvider,
     execute: Callable[[ToolInput], Awaitable[list[Evidence]]],
     observer: Observer,
+    proposal_validator: Callable[[ProposalDraft, list[Evidence]], Awaitable[VerifiedProposal]]
+    | None = None,
+    instructions: str = INSTRUCTIONS,
 ) -> InvestigationResult:
     evidence: list[Evidence] = []
     observations: list[dict[str, object]] = []
@@ -47,7 +57,7 @@ async def investigate(
             },
             ensure_ascii=False,
         )
-        if len(payload.encode()) > 64 * 1024 or count_tokens(INSTRUCTIONS + payload) > 8000:
+        if len(payload.encode()) > 64 * 1024 or count_tokens(instructions + payload) > 8000:
             raise AppError(
                 "agent_context_limit", "Investigation context reached its safe limit.", 409
             )
@@ -60,6 +70,12 @@ async def investigate(
         result = StepResult.model_validate(raw.model_dump())
         await observer.usage(step, result.input_tokens, result.output_tokens)
         decision = result.decision
+        if proposal_validator is not None and not isinstance(decision, ProposalDecision):
+            raise AppError(
+                "proposal_output_invalid", "Provider did not return a proposal decision.", 502
+            )
+        if proposal_validator is None and isinstance(decision, ProposalDecision):
+            raise AppError("proposal_output_invalid", "Investigation cannot publish edits.", 502)
         if step == 1:
             if not decision.plan:
                 raise AppError(
@@ -69,7 +85,14 @@ async def investigate(
             await observer.emit("plan", " | ".join(plan))
         if decision.answer is not None:
             validate_citations(decision.answer, evidence)
-            return InvestigationResult(answer=decision.answer, evidence=evidence)
+            proposal = None
+            if isinstance(decision, ProposalDecision) and decision.proposal is not None:
+                assert proposal_validator is not None
+                proposal = await proposal_validator(decision.proposal, evidence)
+                await observer.emit(
+                    "proposal_validated", "Patch matches inspected source. Tests have not been run."
+                )
+            return InvestigationResult(answer=decision.answer, evidence=evidence, proposal=proposal)
         if step == 5:
             raise AppError(
                 "agent_step_limit",
