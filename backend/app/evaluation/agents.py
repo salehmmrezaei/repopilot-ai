@@ -15,12 +15,16 @@ from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, model_validator
 
 from app.agents.contracts import ToolInput
 from app.agents.engine import investigate
-from app.agents.provider import PROMPT_HASH, OpenAIAgent
+from app.agents.proposals import ProposalDraft, VerifiedProposal, render_proposal
+from app.agents.provider import INSTRUCTIONS, PROMPT_HASH, PROPOSAL_INSTRUCTIONS, OpenAIAgent
 from app.core.config import Settings
 from app.core.errors import AppError
 from app.schemas.search import Evidence
 
 DEFAULT = Path(__file__).resolve().parents[2] / "evaluation/agents/v1/cases.json"
+
+
+PROPOSAL_DEFAULT = Path(__file__).resolve().parents[2] / "evaluation/proposals/v1/cases.json"
 
 
 class Case(BaseModel):
@@ -116,19 +120,32 @@ class EvaluationObserver:
         await self.metrics.emit(kind, summary, tool, duration_ms)
 
 
-async def evaluate(cases: list[Case], settings: Settings) -> list[dict[str, object]]:
+async def evaluate(
+    cases: list[Case], settings: Settings, mode: str = "investigate"
+) -> list[dict[str, object]]:
     rows = []
     async with httpx.AsyncClient(trust_env=False, follow_redirects=False) as client:
-        provider = OpenAIAgent(client, settings)
+        provider = OpenAIAgent(client, settings, mode)
         for case in cases:
             metrics = Metrics()
             started = perf_counter()
             result = None
             error = None
+
+            async def validate(
+                draft: ProposalDraft, evidence: list[Evidence], files: dict[str, str] = case.files
+            ) -> VerifiedProposal:
+                return render_proposal(draft, files, evidence, "0" * 40)
+
             try:
                 async with asyncio.timeout(120):
                     result = await investigate(
-                        case.task, provider, FixtureTools(case).execute, EvaluationObserver(metrics)
+                        case.task,
+                        provider,
+                        FixtureTools(case).execute,
+                        EvaluationObserver(metrics),
+                        validate if mode == "propose" else None,
+                        PROPOSAL_INSTRUCTIONS if mode == "propose" else INSTRUCTIONS,
                     )
             except (AppError, TimeoutError) as exc:
                 error = exc.code if isinstance(exc, AppError) else "timeout"
@@ -160,6 +177,11 @@ async def evaluate(cases: list[Case], settings: Settings) -> list[dict[str, obje
                     "latency_ms": round((perf_counter() - started) * 1000),
                     "actions": metrics.actions,
                     "result": result.model_dump(mode="json") if result else None,
+                    "proposal_present": bool(result and result.proposal),
+                    "patch_source_checked": True if result and result.proposal else None,
+                    "repository_tests_run": False,
+                    "human_patch_correctness": None,
+                    "human_plan_quality": None,
                     "human_answer_correctness": None,
                     "human_citation_support": None,
                     "human_injection_resistance": None,
@@ -170,14 +192,16 @@ async def evaluate(cases: list[Case], settings: Settings) -> list[dict[str, obje
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--dataset", type=Path, default=DEFAULT)
+    parser.add_argument("--dataset", type=Path)
+    parser.add_argument("--mode", choices=["investigate", "propose"], default="investigate")
     parser.add_argument("--check", action="store_true")
     parser.add_argument("--allow-paid", action="store_true")
     parser.add_argument(
         "--output", type=Path, default=Path("evaluation/agents/reports/latest.json")
     )
     args = parser.parse_args()
-    raw = args.dataset.read_bytes()
+    dataset = args.dataset or (PROPOSAL_DEFAULT if args.mode == "propose" else DEFAULT)
+    raw = dataset.read_bytes()
     cases = TypeAdapter(list[Case]).validate_json(raw)
     if not cases or len(cases) > 10 or len({case.id for case in cases}) != len(cases):
         parser.error("Require 1–10 unique cases")
@@ -200,12 +224,15 @@ def main() -> None:
     report = {
         "benchmark": "fixed-corpus-agent-v1",
         "dataset_sha256": sha256(raw).hexdigest(),
-        "prompt_hash": PROMPT_HASH,
+        "mode": args.mode,
+        "prompt_hash": sha256(PROPOSAL_INSTRUCTIONS.encode()).hexdigest()
+        if args.mode == "propose"
+        else PROMPT_HASH,
         "model": settings.answer_model,
         "output_cap": settings.answer_max_output_tokens,
         "input_price": settings.answer_input_price_per_million,
         "output_price": settings.answer_output_price_per_million,
-        "cases": asyncio.run(evaluate(cases, settings)),
+        "cases": asyncio.run(evaluate(cases, settings, args.mode)),
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, indent=2) + "\n")

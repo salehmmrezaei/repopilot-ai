@@ -309,3 +309,44 @@ checks include the new duplicate-agent-delivery PostgreSQL race test. No paid ca
 live quality scores are claimed. Follow milestone-8.md for those acceptance steps.
 
 Milestone 9 patch proposals and Milestone 10 execution remain outside this release.
+
+## Milestone 9 — implementation plans and patch proposals
+
+Implemented the proposal slice on the delivered Milestone 8 source. Milestone 8 local
+acceptance was not independently verified here. Milestone 10 execution remains untouched.
+
+Verified here on 2026-09-27:
+
+- Full backend suite: 271 passed, nine infrastructure cases skipped, two existing
+  upstream Starlette/AnyIO deprecation warnings. Ruff lint/format pass; strict mypy
+  passes all 138 application modules.
+- New tests validate typed edit/schema boundaries, path restrictions, exact source and
+  inspected-range matching, missing/stale source, old-text mismatches, file collisions,
+  mode-aware idempotency, authorization, immutable downloads and source preservation.
+- Literal fixture patches pass git apply --check and apply in temporary directories:
+  replacements, UTF-8 Unicode, no trailing newline, empty replacement, new file and
+  executable-file deletion. The tests do not execute fixture content or repository code.
+- Proposal integration with the portable database covers cancellation during the final
+  provider call, retained usage after rejection, completion-event rollback, duplicate
+  delivery, index deletion, conversation deletion, and no Q&A transcript side effects.
+- Frontend: 58 tests pass across 13 files; TypeScript/ESLint/Prettier pass. Tests cover
+  plan/diff rendering and escaping, explicit untested state, the authorized download,
+  fixed proposal mode/request key across retries, and invalid validation-status rejection.
+- Standard pnpm build still fails with the previously observed native minifier Bus error,
+  exit 135 after transforming 147 modules. Unminified production bundling passes. The
+  standard build configuration is unchanged; normal Docker/CI minification is unverified.
+- Offline Alembic PostgreSQL SQL reaches 0013_patch_proposals. This is not a real
+  PostgreSQL upgrade/drift/locking check. The PostgreSQL duplicate-delivery case now
+  parameterizes investigation and proposal modes; both are skipped here.
+- Four proposal evaluation cases validate without provider calls. Dataset SHA-256:
+  cbb4d7e7234aac6bcffdc2d2aca96ff7724710ae226f7aae0ceee0e818237155.
+  Investigation and proposal fixture-read tests both pass. No live model quality,
+  semantic patch correctness or sandbox test results are claimed.
+- The upgrade patch is checked/applied to the exact Milestone 8 ZIP, with resulting
+  files compared to final source. The deliverable ZIP is integrity-tested.
+
+Remaining acceptance: nine real infrastructure tests, actual migration/drift checks,
+Docker builds/startup, manual browser/download behavior, normal minified build, live
+provider compatibility and human review of paid evaluation reports. See milestone-9.md.
+No paid calls were made. New-file absence is checked only in the imported snapshot;
+a complete-checkout collision check and sandbox application/testing remain future work.

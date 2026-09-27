@@ -108,7 +108,8 @@ export function AuthWorkspace() {
           <h2>A home for your codebase knowledge.</h2>
           <p>
             Your account is the first step. Connect public repositories after
-            signing in. Grounded AI answers arrive in later milestones.
+            signing in to explore cited answers, investigations and patch
+            proposals.
           </p>
           <p className="note">
             Keep this development instance private. Email verification and

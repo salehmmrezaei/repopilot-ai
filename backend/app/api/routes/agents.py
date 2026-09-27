@@ -55,3 +55,27 @@ async def cancel(
     run_id: UUID, data: IndexAction, identity: Writer, agents: Agents
 ) -> AgentResponse:
     return await agents.cancel(identity.user.id, run_id)
+
+
+@router.get("/agent-runs/{run_id}/patch", response_class=Response)
+async def download_patch(run_id: UUID, identity: Reader, agents: Agents) -> Response:
+    from app.core.errors import AppError
+
+    detail = await agents.get(identity.user.id, run_id)
+    result = detail.run.result
+    if (
+        detail.run.mode != "propose"
+        or detail.run.status != "completed"
+        or result is None
+        or result.proposal is None
+    ):
+        raise AppError("proposal_unavailable", "No completed patch is available for this run.", 409)
+    return Response(
+        content=result.proposal.diff,
+        media_type="text/plain; charset=utf-8",
+        headers={
+            "Content-Disposition": f'attachment; filename="proposal-{run_id}.patch"',
+            "Cache-Control": "no-store",
+            "X-Content-Type-Options": "nosniff",
+        },
+    )

@@ -10,12 +10,14 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.agents.contracts import AgentProvider, InvestigationResult, ToolInput
 from app.agents.engine import investigate
-from app.agents.provider import configuration
+from app.agents.proposals import ProposalDraft, VerifiedProposal, render_proposal
+from app.agents.provider import INSTRUCTIONS, PROPOSAL_INSTRUCTIONS, configuration
 from app.agents.tools import RepositoryTools
 from app.core.config import Settings
 from app.core.errors import AppError
-from app.models import AgentCall, AgentRun, Conversation
+from app.models import AgentCall, AgentRun, Conversation, RepositoryFile, RepositoryIndex
 from app.repositories.agent import event
+from app.repositories.repository import RepositoryStore
 from app.schemas.search import Evidence
 
 
@@ -150,12 +152,15 @@ async def run_agent(
                 conv = await db.get(Conversation, run.conversation_id)
                 if conv is None:
                     return
-                if not settings.agents_enabled or run.config_hash != configuration(settings):
+                if not settings.agents_enabled or run.config_hash != configuration(
+                    settings, run.mode
+                ):
                     raise AppError(
                         "agent_config_changed",
                         "Agent configuration changed. Submit a new investigation.",
                         409,
                     )
+                mode, commit_sha = run.mode, run.commit_sha
                 user_id, repository_id, source_id, question = (
                     conv.user_id,
                     conv.repository_id,
@@ -170,7 +175,51 @@ async def run_agent(
                     await db.commit()
                     return await build_tools(db, user_id, repository_id, source_id).execute(action)
 
-            result = await investigate(question, provider, execute, observer)
+            async def validate_proposal(
+                draft: ProposalDraft, evidence: list[Evidence]
+            ) -> VerifiedProposal:
+                async with factory() as db:
+                    await observer.active(db)
+                    await RepositoryStore(db).owned(user_id, repository_id)
+                    source = await db.scalar(
+                        select(RepositoryIndex).where(
+                            RepositoryIndex.id == source_id,
+                            RepositoryIndex.repository_id == repository_id,
+                            RepositoryIndex.status == "completed",
+                            RepositoryIndex.commit_sha == commit_sha,
+                        )
+                    )
+                    if source is None:
+                        raise AppError(
+                            "agent_source_missing", "Pinned source is no longer available.", 409
+                        )
+                    # Load paths for collisions; content only for the four edited files.
+                    rows = await db.execute(
+                        select(RepositoryFile.path, RepositoryFile.content).where(
+                            RepositoryFile.repository_id == repository_id,
+                            RepositoryFile.import_job_id == source.import_job_id,
+                            RepositoryFile.path.in_([e.path for e in draft.edits]),
+                        )
+                    )
+                    files = dict(rows.tuples().all())
+                    paths = await db.scalars(
+                        select(RepositoryFile.path).where(
+                            RepositoryFile.repository_id == repository_id,
+                            RepositoryFile.import_job_id == source.import_job_id,
+                        )
+                    )
+                    for path in paths:
+                        files.setdefault(path, "")
+                    return render_proposal(draft, files, evidence, commit_sha)
+
+            result = await investigate(
+                question,
+                provider,
+                execute,
+                observer,
+                validate_proposal if mode == "propose" else None,
+                PROPOSAL_INSTRUCTIONS if mode == "propose" else INSTRUCTIONS,
+            )
             await observer.finish(result)
     except Exception as exc:
         code = (

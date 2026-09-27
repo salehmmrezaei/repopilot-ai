@@ -10,7 +10,7 @@ export function App() {
           </span>
           RepoPilot <span className="brand-ai">AI</span>
         </a>
-        <span className="milestone">07C2B / Streaming answers</span>
+        <span className="milestone">09 / Patch proposals</span>
       </header>
       <main>
         <div className="intro">

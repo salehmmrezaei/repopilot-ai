@@ -1,7 +1,7 @@
 # RepoPilot AI
 
 A repository-understanding application that will grow into a controlled software
-engineering agent. **Current scope: Milestone 8, read-only repository investigations implemented.**
+engineering agent. **Current scope: Milestone 9, implementation plans and patch proposals implemented.**
 React/TypeScript/Vite, FastAPI, PostgreSQL/pgvector, Redis, Celery, and a durable
 job dispatcher now support authenticated imports, progress, and basic source browsing.
 Static indexing, a React source/search inspector, keyword/symbol retrieval and optional
@@ -14,10 +14,12 @@ enter saved history. Per-call receipts retain known generation/query-embedding u
 when publication fails or is cancelled. Unknown calls are never represented as free.
 A bounded investigation agent can choose repository search/read/symbol/reference tools,
 show a public action plan and durable activity timeline, and return source-backed findings.
-No code execution or modifications are available. Milestone 9 has not been started.
+The same agent can propose a bounded implementation plan, risks, suggested tests and a downloadable
+unified diff. Existing edits must match inspected source. Proposals are not applied or executed.
+Milestone 10 sandbox validation remains future work.
 
-**Upgrading from the completed Milestone 7 release?** Follow [the Milestone 8 guide](docs/milestone-8.md).
-Milestone 7 was reported complete by the user. Milestone 8 acceptance is documented separately.
+**Upgrading from Milestone 8?** Follow [the Milestone 9 guide](docs/milestone-9.md).
+The guide distinguishes source validation from tests and live model evaluation.
 It preserves your existing `.env`, users, sessions, and PostgreSQL volume.
 
 ## Requirements
@@ -62,7 +64,7 @@ docker compose run --rm migrate alembic current
 ```
 
 Each HTTP call should return 200 and `{"status":"ok","service":"repopilot-api"}`.
-The migration should report `0012_investigations (head)`.
+The migration should report `0013_patch_proposals (head)`.
 The frontend proxy and direct API checks deliberately use different URL prefixes.
 
 ## Verify dependency failure and recovery
