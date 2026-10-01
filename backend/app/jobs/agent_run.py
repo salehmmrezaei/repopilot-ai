@@ -161,6 +161,7 @@ async def run_agent(
                         409,
                     )
                 mode, commit_sha = run.mode, run.commit_sha
+                feedback = run.execution_feedback
                 user_id, repository_id, source_id, question = (
                     conv.user_id,
                     conv.repository_id,
@@ -219,6 +220,7 @@ async def run_agent(
                 observer,
                 validate_proposal if mode == "propose" else None,
                 PROPOSAL_INSTRUCTIONS if mode == "propose" else INSTRUCTIONS,
+                feedback,
             )
             await observer.finish(result)
     except Exception as exc:

@@ -41,6 +41,7 @@ async def investigate(
     proposal_validator: Callable[[ProposalDraft, list[Evidence]], Awaitable[VerifiedProposal]]
     | None = None,
     instructions: str = INSTRUCTIONS,
+    feedback: dict[str, object] | None = None,
 ) -> InvestigationResult:
     evidence: list[Evidence] = []
     observations: list[dict[str, object]] = []
@@ -50,6 +51,7 @@ async def investigate(
         payload = json.dumps(
             {
                 "task": question,
+                "execution_feedback": feedback,
                 "steps_remaining": 6 - step,
                 "plan": plan,
                 "observations": observations,

@@ -1,0 +1,18 @@
+# Install as a USER service on the dedicated rootless-Docker host only.
+[Unit]
+Description=RepoPilot isolated execution controller
+After=docker.service
+Requires=docker.service
+
+[Service]
+WorkingDirectory=%h/repopilot-ai/backend
+EnvironmentFile=%h/.config/repopilot-sandbox.env
+Environment=DOCKER_HOST=unix://%t/docker.sock
+ExecStart=%h/repopilot-ai/backend/.venv/bin/uvicorn app.sandbox_runner.server:create_app --factory --host 127.0.0.1 --port 8090 --workers 1 --no-access-log
+Restart=always
+RestartSec=5
+TimeoutStopSec=45
+UMask=0077
+
+[Install]
+WantedBy=default.target

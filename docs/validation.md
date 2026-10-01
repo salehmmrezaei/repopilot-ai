@@ -350,3 +350,48 @@ Docker builds/startup, manual browser/download behavior, normal minified build, 
 provider compatibility and human review of paid evaluation reports. See milestone-9.md.
 No paid calls were made. New-file absence is checked only in the imported snapshot;
 a complete-checkout collision check and sandbox application/testing remain future work.
+
+## Milestone 10 — isolated execution and test feedback
+
+Milestone 9 was reported complete by the user. Milestone 10 implementation is delivered;
+actual dedicated-runner and full-stack acceptance remain required before enabling execution.
+
+Verified here on 2026-09-29:
+
+- Final full backend suite: 294 passed, twelve infrastructure cases skipped, two existing
+  Starlette/AnyIO deprecation warnings. Ruff lint/format pass; strict mypy passes all
+  151 application modules. The final suite ran after controller cleanup/retention fixes.
+- Execution tests cover explicit confirmation, owner/CSRF protection, exact commit use,
+  archive/patch receipt fingerprints, duplicate delivery, cancellation, uncertain remote
+  failures, no source mutation, deletion, disabled configuration and bounded feedback.
+- Controller tests cover authenticated idempotency, delayed-POST cancel tombstones,
+  current-phase cancellation, no later phase, resource-policy verification, bounded logs,
+  OOM classification, cleanup and rejected rootless/cgroup configuration. Host subprocess
+  calls in these tests are mocked; they do not constitute a real container-isolation test.
+- Full-archive tests reject traversal, .git, symlinks, hardlinks and special entries,
+  preserve binary files, reject submodules and handle root profile detection. Source
+  mismatches fail before any patch application call.
+- Frontend: 61 tests across fourteen files pass; TypeScript/ESLint/Prettier pass.
+  New tests cover explicit confirmation, fixed request keys on uncertain responses,
+  baseline/patched receipt separation, escaped logs, revision selection and cancellation.
+- Unminified production bundling succeeds (148 modules). Standard minification still
+  reproduces the native Bus error/exit 135 observed in the preceding milestones. The
+  normal build configuration remains unchanged; Docker/CI minification is a pending gate.
+- Offline PostgreSQL SQL reaches 0014_execution_runs with execution table, constraints,
+  indexes and frozen agent feedback column. This is not a real migration/drift check.
+- Both four-case investigation/proposal datasets validate without provider calls. No
+  model-quality or real sandbox execution scores are claimed; no paid calls were made.
+- The exact upgrade patch is checked/applied to the Milestone 9 archive and resulting
+  source compared to final packaged files. The final ZIP is integrity-tested.
+
+Not executed here: actual PostgreSQL migration/schema drift, Redis/Celery/concurrency
+integration, real rootless Docker image build and Python/JavaScript sandbox tests, browser
+acceptance, timeout/output-flood/crash exercises on a real runner, actual CI or live model
+feedback evaluation. Docker is unavailable in this environment. The twelve skipped cases
+include the new PostgreSQL duplicate-execution race and two real-sandbox profile fixtures.
+
+The deployment guide documents the separate rootless controller, immutable image IDs,
+HTTPS authentication, limits, cleanup, cancellation latency and independent seven-day
+runner log retention. It also states that containers share a kernel and that daemon/
+controller failure can require operator cleanup. These limits are not hidden by mock tests.
+Follow milestone-10.md before enabling APP_EXECUTIONS_ENABLED.

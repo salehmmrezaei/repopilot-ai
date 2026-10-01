@@ -25,7 +25,7 @@ celery_app.conf.update(
     task_soft_time_limit=150,
     task_time_limit=170,
     broker_transport_options={
-        "visibility_timeout": 240,
+        "visibility_timeout": 360,
         "socket_connect_timeout": 2,
         "socket_timeout": 2,
     },
@@ -225,4 +225,33 @@ def agent_run(run_id: str) -> None:
     except Exception as exc:
         logging.getLogger("repopilot.worker").error(
             "agent_task_failed", extra={"job_id": run_id, "error_type": type(exc).__name__}
+        )
+
+
+async def execute_sandbox(run_id: UUID) -> None:
+    from app.execution.client import SandboxClient
+    from app.jobs.execution_run import run_execution
+
+    engine = create_engine(settings)
+    try:
+        async with httpx.AsyncClient(trust_env=False, follow_redirects=False, timeout=30) as client:
+            await run_execution(
+                async_sessionmaker(engine, expire_on_commit=False),
+                run_id,
+                settings,
+                GitHubClient(client, 10 * 1024 * 1024),
+                SandboxClient(client, settings),
+            )
+    finally:
+        await engine.dispose()
+
+
+@celery_app.task(name="repopilot.execution_run", soft_time_limit=290, time_limit=310)  # type: ignore[untyped-decorator]
+def execution_run(run_id: str) -> None:
+    configure_logging()
+    try:
+        asyncio.run(execute_sandbox(UUID(run_id)))
+    except Exception as exc:
+        logging.getLogger("repopilot.worker").error(
+            "execution_failed", extra={"job_id": run_id, "error_type": type(exc).__name__}
         )

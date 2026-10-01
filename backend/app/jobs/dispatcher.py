@@ -12,6 +12,7 @@ from app.core.logging import configure_logging
 from app.database.session import create_engine
 from app.jobs.agent_dispatcher import dispatch_agents
 from app.jobs.answer_dispatcher import dispatch_answers
+from app.jobs.execution_dispatcher import dispatch_executions
 from app.models import ImportJob, RepositoryIndex, SearchIndex
 
 logger = logging.getLogger("repopilot.dispatcher")
@@ -106,6 +107,9 @@ async def main() -> None:
     async def publish_agent(run_id: UUID) -> None:
         await asyncio.to_thread(celery_app.send_task, "repopilot.agent_run", args=[str(run_id)])
 
+    async def publish_execution(run_id: UUID) -> None:
+        await asyncio.to_thread(celery_app.send_task, "repopilot.execution_run", args=[str(run_id)])
+
     try:
         while True:
             try:
@@ -114,6 +118,7 @@ async def main() -> None:
                 await dispatch_once(factory, publish_search, SearchIndex)
                 await dispatch_answers(factory, publish_answer)
                 await dispatch_agents(factory, publish_agent)
+                await dispatch_executions(factory, publish_execution)
             except Exception as exc:
                 logger.error("dispatch_cycle_failed", extra={"error_type": type(exc).__name__})
             await asyncio.sleep(settings.dispatcher_interval_seconds)

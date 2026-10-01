@@ -12,6 +12,7 @@ class AgentRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     request_key: UUID
     mode: Literal["investigate", "propose"] = "investigate"
+    feedback_execution_id: UUID | None = None
     question: str = Field(min_length=1, max_length=512, pattern=r"\S")
 
 
