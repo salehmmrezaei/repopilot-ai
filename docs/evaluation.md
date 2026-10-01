@@ -73,8 +73,8 @@ thresholds. CI uploads its keyword report; no provider secrets are supplied to C
 ## What is not measured yet
 
 At the original retrieval-only milestone, answer-quality metrics were not available.
-The generation evaluation described below now covers answers, with human grading required. Context provenance/budgets have behavior tests. No
-agent exists, so task completion/test pass rate/iteration cost are later metrics.
+The generation evaluation described below now covers answers, with human grading required. Context provenance/budgets have behavior tests. Agent and coding evaluation now cover bounded task attempts and iteration cost;
+see the Milestone 11 section below.
 Relevant-neighbor retrieval alone does not prove that sufficient evidence exists
 to answer a question. Add explicit abstention evaluation when Q&A is introduced.
 
@@ -175,3 +175,25 @@ Compare prompt/model/dataset hashes, provider errors, first-delta/final latency 
 reviewed correctness/groundedness. Do not expect identical wording from two model runs.
 Keep unknown usage distinct from zero. Transport mocks test failure behavior; they do
 not establish live model quality or API availability for your account.
+
+
+## Milestone 11: coding evaluation and report dashboard
+
+See [milestone-11.md](milestone-11.md#coding-benchmark-and-dashboard) for commands,
+limits, fields and acceptance. `app.evaluation.coding --check` validates four labeled
+synthetic tasks and reference patches without importing fixture code or calling a model.
+`--verify-fixtures --allow-execution` tests baseline/reference pairs only in the dedicated
+sandbox. Live evaluation additionally requires `--allow-paid`; it never silently executes
+or installs repository code on the evaluator host.
+
+The runner uses the real agent engine and patch validator, protected test/configuration
+files, bounded failed-diff/log feedback and the same repair stop policy as the application.
+Reports distinguish first-attempt and final pass rates, preserve errors and unknown usage,
+and pin dataset/corpus/prompt/config/image provenance. Rates include all submitted cases;
+missing execution is not a pass. Human correctness fields start null. An adjacent static
+HTML dashboard shows task outcomes and aggregate metrics with escaped content and no
+external dependencies. Reference-verification mode is explicitly not a model-quality score.
+
+This is an in-memory tool fixture, not an end-to-end retrieval benchmark or held-out
+coding benchmark. Four tasks cannot establish production coding reliability. No live
+coding score or real-container fixture result was measured in this build environment.

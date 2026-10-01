@@ -20,6 +20,7 @@ from app.api.routes.conversations import router as conversation_router
 from app.api.routes.executions import router as execution_router
 from app.api.routes.health import router
 from app.api.routes.indexes import router as index_router
+from app.api.routes.repairs import router as repair_router
 from app.api.routes.repositories import router as repository_router
 from app.api.routes.run_events import router as run_event_router
 from app.api.routes.search import router as search_router
@@ -79,6 +80,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(conversation_router)
     app.include_router(agent_router)
     app.include_router(execution_router)
+    app.include_router(repair_router)
     app.include_router(agent_event_router)
 
     @app.middleware("http")

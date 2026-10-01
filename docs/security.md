@@ -274,3 +274,18 @@ Bounded parsers reject oversized/malformed streams. Provider traffic is limited 
 service/worker deadlines remain. There is no retry on an ambiguous provider failure.
 After cancellation, a subsequent preview write can stop local reading; the remote
 request may still complete and incur charges. Full per-call receipt accounting remains 7C3.
+
+
+## Automatic repair (Milestone 11)
+
+Disabled by default. Explicit consent bounds automatic generation/execution to two
+revisions, ten additional model calls, three sandbox runs and a 20-minute deadline.
+Existing quotas and source/owner/CSRF checks apply to each child. Parent transitions and
+child creation/cancellation commit atomically; worker guards reject expired authorization.
+In-flight charges and sandbox cleanup latency remain possible. Feedback contains bounded,
+untrusted prior diff and logs; source must be read again and edits validated against the
+original commit. Changing model configuration or execution environment stops the loop.
+The app permits repository test edits, so test success must never stand in for human
+review. The coding benchmark separately protects tests/configuration and labels reference
+verification independently of live-model results. No automatic repository write or PR is
+introduced. See milestone-11.md for operational acceptance and artifact retention.

@@ -4,6 +4,7 @@ from app.models.code import CodeChunk, CodeSymbol
 from app.models.conversation import Conversation, Message
 from app.models.execution import ExecutionRun
 from app.models.import_job import ImportJob
+from app.models.repair import RepairRun
 from app.models.repository import Repository
 from app.models.repository_file import RepositoryFile
 from app.models.repository_index import RepositoryIndex
@@ -15,6 +16,7 @@ from app.models.usage_receipt import UsageReceipt
 from app.models.user import User
 
 __all__ = [
+    "RepairRun",
     "ExecutionRun",
     "AgentRun",
     "AgentEvent",

@@ -3,6 +3,7 @@ import { ApiError } from '../../lib/api/http';
 import { cancelAgent, getAgent, type AgentDetail } from './api';
 import { consumeAgentEvents } from './events';
 import { ExecutionPanel } from '../execution/ExecutionPanel';
+import { RepairPanel } from '../repair/RepairPanel';
 import { ProposalView } from './ProposalView';
 export function AgentRunView({
   runId,
@@ -193,12 +194,19 @@ export function AgentRunView({
               {data.run.result.proposal &&
                 data.run.mode === 'propose' &&
                 data.run.status === 'completed' && (
-                  <ExecutionPanel
-                    agentId={runId}
-                    csrf={csrf}
-                    onExpired={onExpired}
-                    onRevise={onRevise}
-                  />
+                  <>
+                    <RepairPanel
+                      agentId={runId}
+                      csrf={csrf}
+                      onExpired={onExpired}
+                    />
+                    <ExecutionPanel
+                      agentId={runId}
+                      csrf={csrf}
+                      onExpired={onExpired}
+                      onRevise={onRevise}
+                    />
+                  </>
                 )}
               {data.run.result.evidence.map((item) => (
                 <details

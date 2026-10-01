@@ -4,15 +4,18 @@ from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
+from redis.asyncio import Redis
 from sqlalchemy import and_, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.core.config import Settings
 from app.core.logging import configure_logging
+from app.core.rate_limits import RedisRateLimiter
 from app.database.session import create_engine
 from app.jobs.agent_dispatcher import dispatch_agents
 from app.jobs.answer_dispatcher import dispatch_answers
 from app.jobs.execution_dispatcher import dispatch_executions
+from app.jobs.repair_dispatcher import advance_repairs
 from app.models import ImportJob, RepositoryIndex, SearchIndex
 
 logger = logging.getLogger("repopilot.dispatcher")
@@ -85,6 +88,10 @@ async def main() -> None:
     settings = Settings()
     engine = create_engine(settings)
     factory = async_sessionmaker(engine, expire_on_commit=False)
+    redis = Redis.from_url(
+        settings.redis_url.get_secret_value(), socket_timeout=2, socket_connect_timeout=2
+    )
+    limiter = RedisRateLimiter(redis)
 
     async def publish(job_id: UUID) -> None:
         await asyncio.to_thread(
@@ -116,6 +123,7 @@ async def main() -> None:
                 await dispatch_once(factory, publish)
                 await dispatch_once(factory, publish_index, RepositoryIndex)
                 await dispatch_once(factory, publish_search, SearchIndex)
+                await advance_repairs(factory, settings, limiter)
                 await dispatch_answers(factory, publish_answer)
                 await dispatch_agents(factory, publish_agent)
                 await dispatch_executions(factory, publish_execution)
@@ -123,6 +131,7 @@ async def main() -> None:
                 logger.error("dispatch_cycle_failed", extra={"error_type": type(exc).__name__})
             await asyncio.sleep(settings.dispatcher_interval_seconds)
     finally:
+        await redis.aclose()
         await engine.dispose()
 
 

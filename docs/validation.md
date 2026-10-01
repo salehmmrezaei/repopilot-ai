@@ -395,3 +395,41 @@ HTTPS authentication, limits, cleanup, cancellation latency and independent seve
 runner log retention. It also states that containers share a kernel and that daemon/
 controller failure can require operator cleanup. These limits are not hidden by mock tests.
 Follow milestone-10.md before enabling APP_EXECUTIONS_ENABLED.
+
+## Milestone 11 implementation checks (2026-09-30)
+
+- Full backend suite: **320 passed, 17 skipped**, two existing Starlette/AnyIO
+  deprecation warnings. Ruff lint/format pass (231 files); strict mypy passes all
+  160 application modules.
+- Repair behavior tests cover owner/CSRF/explicit consent, replay/conflict, one active
+  repair, successful initial test, failure/revision/success, two-revision exhaustion,
+  repeated-patch stop, cancellation before execution/during execution/during generation,
+  deadline, disabled configuration, changed model/image, resource limits, quota stop,
+  rollback of a child after source change, original source preservation and cascade deletion.
+  Worker tests verify expired queued execution/model work makes no new external call even
+  without another dispatcher tick. These ordinary tests use SQLite and controlled doubles.
+- Coding evaluation tests validate all four reference diffs/deterministic archives,
+  protected tests, bounded attempts, failed-output feedback, first versus final pass,
+  unknown provider usage, invalid baselines, escaped dashboard HTML, receipt provenance
+  and remote cleanup on mismatched provenance. They do not measure live-model quality.
+- Full frontend suite: **64 passed** across 15 files. TypeScript, ESLint and Prettier
+  pass. Added coverage for explicit loop consent, fixed identity/limits on uncertain
+  submission, recovered progress, protected cancellation and escaped terminal output.
+- Standard production minification still fails with native **Bus error / exit 135**,
+  consistent with previous releases. Unminified Vite build succeeds (150 modules).
+  No production build setting was weakened. Normal CI/Docker bundling remains required.
+- Offline Alembic SQL reaches **0015_repair_runs**, including request uniqueness,
+  active-conversation uniqueness, budget/status constraints, deadline and child indexes.
+  This is not a real PostgreSQL migration/schema-drift result.
+- Coding `--check`: four valid tasks, zero provider calls and zero sandbox runs.
+  Dataset SHA-256: `225bdc7ae2f1bd17704e8dc3fc2db34669ecc4ad75d28b70673a5c0e8057b3a7`.
+  Existing investigation and proposal fixtures also validate without provider calls.
+- The exact upgrade patch is checked/applied to the delivered Milestone 10 archive,
+  and resulting source is compared with the final package. ZIP integrity is checked.
+
+Not executed here: PostgreSQL migration/drift or real transaction races, Redis/Celery
+integration, rootless Docker image build/execution, browser acceptance, hosted CI or
+paid model evaluation. The 17 skipped cases include the prior 12 infrastructure cases,
+one new PostgreSQL repair race and four real-sandbox coding reference cases. Docker is
+unavailable. A runnable dedicated runner and an explicitly authorized paid benchmark
+are required before reporting any real coding success rate. Follow milestone-11.md.

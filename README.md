@@ -1,7 +1,7 @@
 # RepoPilot AI
 
 A repository-understanding application that will grow into a controlled software
-engineering agent. **Current scope: Milestone 10, opt-in isolated patch validation implemented.**
+engineering agent. **Current scope: Milestone 11, bounded automatic repair and coding benchmark implemented.**
 React/TypeScript/Vite, FastAPI, PostgreSQL/pgvector, Redis, Celery, and a durable
 job dispatcher now support authenticated imports, progress, and basic source browsing.
 Static indexing, a React source/search inspector, keyword/symbol retrieval and optional
@@ -15,12 +15,14 @@ when publication fails or is cancelled. Unknown calls are never represented as f
 A bounded investigation agent can choose repository search/read/symbol/reference tools,
 show a public action plan and durable activity timeline, and return source-backed findings.
 The same agent can propose a bounded implementation plan, risks, suggested tests and a downloadable
-unified diff. Existing edits must match inspected source. Proposals are not applied or executed.
+unified diff. Existing edits must match inspected source. Proposals are review artifacts.
 Explicitly approved validation uses a separate dedicated rootless-Docker runner, complete pinned
 archives, fresh baseline/patched containers and durable bounded test receipts. Failed output can
-seed a reviewed revision proposal; original repositories are never changed.
+seed a reviewed revision proposal. An explicitly authorized repair loop can test and revise
+up to twice, preserving every attempt, usage receipt and stop reason. Original repositories
+are never changed. A four-task coding benchmark produces JSON and an HTML dashboard.
 
-**Upgrading from Milestone 9?** Follow [the Milestone 10 guide](docs/milestone-10.md).
+**Upgrading from Milestone 10?** Follow [the Milestone 11 guide](docs/milestone-11.md).
 The guide distinguishes source validation from tests and live model evaluation.
 It preserves your existing `.env`, users, sessions, and PostgreSQL volume.
 

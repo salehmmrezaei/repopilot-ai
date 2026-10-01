@@ -16,6 +16,7 @@ from app.agents.tools import RepositoryTools
 from app.core.config import Settings
 from app.core.errors import AppError
 from app.models import AgentCall, AgentRun, Conversation, RepositoryFile, RepositoryIndex
+from app.repair.guards import require_active
 from app.repositories.agent import event
 from app.repositories.repository import RepositoryStore
 from app.schemas.search import Evidence
@@ -41,6 +42,7 @@ class RunObserver:
             or run.lease_expires_at.replace(tzinfo=UTC) <= datetime.now(UTC)
         ):
             raise AppError("agent_inactive", "Investigation is no longer active.", 409)
+        await require_active(db, self.settings, "agent", self.run_id)
         return run
 
     async def begin(self, step: int) -> None:
