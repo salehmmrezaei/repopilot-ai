@@ -14,6 +14,7 @@ from app.core.errors import AppError
 from app.execution.contracts import SandboxRequest, SandboxResult
 from app.integrations.github.client import GitHubClient, RepositorySource
 from app.models import AgentRun, Conversation, ExecutionRun, Repository
+from app.repair.guards import require_active
 
 
 class Runner(Protocol):
@@ -50,6 +51,7 @@ async def run_execution(
 
     async def active() -> bool:
         async with factory() as db:
+            await require_active(db, settings, "execution", run_id)
             row = await db.get(ExecutionRun, run_id)
             return bool(row and row.status == "running" and row.lease_token == token)
 
@@ -58,6 +60,7 @@ async def run_execution(
             if not settings.executions_enabled:
                 raise AppError("execution_disabled", "Execution is disabled.", 409)
             async with factory() as db:
+                await require_active(db, settings, "execution", run_id)
                 run = await db.get(ExecutionRun, run_id)
                 assert run is not None
                 agent = await db.get(AgentRun, run.agent_run_id)

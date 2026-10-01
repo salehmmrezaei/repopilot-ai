@@ -9,7 +9,7 @@ const evidence = z.object({
   end_line: z.number(),
   content: z.string(),
 });
-const runSchema = z.object({
+export const runSchema = z.object({
   id: z.string(),
   conversation_id: z.string(),
   request_key: z.string(),

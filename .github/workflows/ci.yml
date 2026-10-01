@@ -39,6 +39,7 @@ jobs:
       - run: uv run ruff format --check .
       - run: uv run mypy app
       - run: uv run python -m app.evaluation.answers --check
+      - run: uv run python -m app.evaluation.coding --check
       - run: uv run python -m app.evaluation.agents --check
       - run: uv run python -m app.evaluation.agents --mode propose --check
       - run: uv run python -m app.evaluation.answers --check --dataset evaluation/answers/followups-v1/cases.json

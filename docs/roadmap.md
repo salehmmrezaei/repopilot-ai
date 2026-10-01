@@ -20,9 +20,11 @@ records the React + TypeScript + Vite change from the proposed Next.js frontend.
 8. Read-only investigation agent — implemented: typed tools, five-call bounded loop,
    durable jobs/usage/events, SSE timeline, source-backed answers and evaluation fixtures.
    Local infrastructure/browser/live-model acceptance pending; see milestone-8.md.
-9. Plans and patch proposals — pinned base, safe patch application, diff inspection.
-10. Isolated execution — separate security boundary, curated test environments.
-11. Bounded repair loop and coding benchmark.
+9. Plans and patch proposals — implemented: pinned base, source-checked diffs and downloads.
+10. Isolated execution — implemented: separate runner, curated test environments.
+    Deployment acceptance remains documented in milestone-10.md.
+11. Bounded repair loop and coding benchmark — implemented; see milestone-11.md
+    for PostgreSQL/runner/browser acceptance and separately authorized live evaluation.
 12. Extensions individually: TypeScript, OAuth/private repositories, reranking,
     incremental indexing, PR review, deployment and deeper observability.
 

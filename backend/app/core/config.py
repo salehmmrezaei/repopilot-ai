@@ -48,6 +48,7 @@ class Settings(BaseSettings):
             raise ValueError("execution requires a sandbox token of at least 32 characters")
         return self
 
+    repairs_enabled: bool = False
     agents_enabled: bool = False
     agent_daily_request_limit: int = Field(default=20, ge=1, le=1000)
     answers_enabled: bool = False

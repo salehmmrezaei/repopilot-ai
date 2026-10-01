@@ -39,7 +39,7 @@ class ExecutionService:
         )
 
     async def submit(
-        self, user: UUID, agent_id: UUID, data: ExecutionRequest
+        self, user: UUID, agent_id: UUID, data: ExecutionRequest, *, commit: bool = True
     ) -> tuple[ExecutionResponse, bool]:
         agent = await owned(self.db, user, agent_id)
         await self.db.execute(select(AgentRun.id).where(AgentRun.id == agent_id).with_for_update())
@@ -94,7 +94,8 @@ class ExecutionService:
         self.db.add(run)
         await self.db.flush()
         result = ExecutionResponse.model_validate(run)
-        await self.db.commit()
+        if commit:
+            await self.db.commit()
         return result, True
 
     async def cancel(self, user: UUID, run_id: UUID) -> ExecutionResponse:
