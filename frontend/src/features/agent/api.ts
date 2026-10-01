@@ -91,6 +91,7 @@ export interface Submission {
   request_key: string;
   question: string;
   mode: 'investigate' | 'propose';
+  feedback_execution_id?: string | null;
 }
 export async function listAgents(id: string, signal: AbortSignal) {
   return z.object({ enabled: z.boolean(), items: z.array(runSchema) }).parse(

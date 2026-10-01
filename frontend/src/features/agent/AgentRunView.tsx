@@ -2,15 +2,18 @@ import { useEffect, useState } from 'react';
 import { ApiError } from '../../lib/api/http';
 import { cancelAgent, getAgent, type AgentDetail } from './api';
 import { consumeAgentEvents } from './events';
+import { ExecutionPanel } from '../execution/ExecutionPanel';
 import { ProposalView } from './ProposalView';
 export function AgentRunView({
   runId,
   csrf,
   onExpired,
+  onRevise,
 }: {
   runId: string;
   csrf: string;
   onExpired: () => void;
+  onRevise?: (id: string) => void;
 }) {
   const [data, setData] = useState<AgentDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -185,6 +188,16 @@ export function AgentRunView({
                     runId={runId}
                     commit={data.run.commit_sha}
                     proposal={data.run.result.proposal}
+                  />
+                )}
+              {data.run.result.proposal &&
+                data.run.mode === 'propose' &&
+                data.run.status === 'completed' && (
+                  <ExecutionPanel
+                    agentId={runId}
+                    csrf={csrf}
+                    onExpired={onExpired}
+                    onRevise={onRevise}
                   />
                 )}
               {data.run.result.evidence.map((item) => (

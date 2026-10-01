@@ -17,6 +17,7 @@ export function AgentPanel({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [question, setQuestion] = useState('');
+  const [feedback, setFeedback] = useState<string | null>(null);
   const [mode, setMode] = useState<'investigate' | 'propose'>('investigate');
   const [selected, setSelected] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -66,6 +67,7 @@ export function AgentPanel({
       request_key: crypto.randomUUID(),
       question: question.trim(),
       mode,
+      feedback_execution_id: feedback,
     };
     setPending(request);
     setBusy(true);
@@ -77,6 +79,7 @@ export function AgentPanel({
       );
       setPending(null);
       setQuestion('');
+      setFeedback(null);
       setRevision((v) => v + 1);
     } catch (reason) {
       if (reason instanceof ApiError && reason.status === 401) onExpired();
@@ -128,6 +131,18 @@ export function AgentPanel({
           <option value="investigate">Read-only investigation</option>
           <option value="propose">Implementation plan and patch</option>
         </select>
+        {feedback && (
+          <p>
+            Revision using execution {feedback}. Logs are untrusted input.{' '}
+            <button
+              type="button"
+              disabled={busy || !!pending}
+              onClick={() => setFeedback(null)}
+            >
+              Clear feedback
+            </button>
+          </p>
+        )}
         <label htmlFor={`${id}-task`}>Investigation task</label>
         <textarea
           id={`${id}-task`}
@@ -181,6 +196,14 @@ export function AgentPanel({
           runId={visible}
           csrf={csrf}
           onExpired={onExpired}
+          onRevise={(executionId) => {
+            if (busy || pending || active) return;
+            setFeedback(executionId);
+            setMode('propose');
+            setQuestion(
+              'Inspect the code and revise the patch to address the sandbox results. Generate a fresh patch against the original pinned source.',
+            );
+          }}
         />
       )}
     </section>

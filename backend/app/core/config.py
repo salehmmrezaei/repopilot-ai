@@ -25,6 +25,29 @@ class Settings(BaseSettings):
             raise ValueError("must be a redis:// or rediss:// connection URL")
         return value
 
+    executions_enabled: bool = False
+    sandbox_url: str = "https://sandbox.invalid"
+    sandbox_token: SecretStr | None = None
+
+    @model_validator(mode="after")
+    def sandbox_configuration(self) -> "Settings":
+        url = urlsplit(self.sandbox_url)
+        if (
+            url.scheme != "https"
+            or not url.hostname
+            or url.username
+            or url.password
+            or url.query
+            or url.fragment
+            or url.path not in {"", "/"}
+        ):
+            raise ValueError("sandbox_url must be an HTTPS origin without credentials")
+        if self.executions_enabled and (
+            self.sandbox_token is None or len(self.sandbox_token.get_secret_value()) < 32
+        ):
+            raise ValueError("execution requires a sandbox token of at least 32 characters")
+        return self
+
     agents_enabled: bool = False
     agent_daily_request_limit: int = Field(default=20, ge=1, le=1000)
     answers_enabled: bool = False

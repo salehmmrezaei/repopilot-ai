@@ -1,7 +1,7 @@
 # RepoPilot AI
 
 A repository-understanding application that will grow into a controlled software
-engineering agent. **Current scope: Milestone 9, implementation plans and patch proposals implemented.**
+engineering agent. **Current scope: Milestone 10, opt-in isolated patch validation implemented.**
 React/TypeScript/Vite, FastAPI, PostgreSQL/pgvector, Redis, Celery, and a durable
 job dispatcher now support authenticated imports, progress, and basic source browsing.
 Static indexing, a React source/search inspector, keyword/symbol retrieval and optional
@@ -16,9 +16,11 @@ A bounded investigation agent can choose repository search/read/symbol/reference
 show a public action plan and durable activity timeline, and return source-backed findings.
 The same agent can propose a bounded implementation plan, risks, suggested tests and a downloadable
 unified diff. Existing edits must match inspected source. Proposals are not applied or executed.
-Milestone 10 sandbox validation remains future work.
+Explicitly approved validation uses a separate dedicated rootless-Docker runner, complete pinned
+archives, fresh baseline/patched containers and durable bounded test receipts. Failed output can
+seed a reviewed revision proposal; original repositories are never changed.
 
-**Upgrading from Milestone 8?** Follow [the Milestone 9 guide](docs/milestone-9.md).
+**Upgrading from Milestone 9?** Follow [the Milestone 10 guide](docs/milestone-10.md).
 The guide distinguishes source validation from tests and live model evaluation.
 It preserves your existing `.env`, users, sessions, and PostgreSQL volume.
 
@@ -64,7 +66,7 @@ docker compose run --rm migrate alembic current
 ```
 
 Each HTTP call should return 200 and `{"status":"ok","service":"repopilot-api"}`.
-The migration should report `0013_patch_proposals (head)`.
+The migration should report `0014_execution_runs (head)`.
 The frontend proxy and direct API checks deliberately use different URL prefixes.
 
 ## Verify dependency failure and recovery

@@ -10,7 +10,7 @@ export function App() {
           </span>
           RepoPilot <span className="brand-ai">AI</span>
         </a>
-        <span className="milestone">09 / Patch proposals</span>
+        <span className="milestone">10 / Sandbox validation</span>
       </header>
       <main>
         <div className="intro">

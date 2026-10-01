@@ -51,6 +51,7 @@ class AgentRun(Base):
     model: Mapped[str] = mapped_column(String(100))
     status: Mapped[str] = mapped_column(String(20), server_default="queued")
     result: Mapped[dict[str, object] | None] = mapped_column(JSON)
+    execution_feedback: Mapped[dict[str, object] | None] = mapped_column(JSON)
     error_code: Mapped[str | None] = mapped_column(String(80))
     error_message: Mapped[str | None] = mapped_column(String(300))
     lease_token: Mapped[UUID | None]
