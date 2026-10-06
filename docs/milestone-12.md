@@ -24,9 +24,10 @@ release, not a claim of live deployment or evaluated model quality.
 
 1. Back up PostgreSQL and retain your existing `.env`. Stop application writers,
    workers and the dispatcher while applying the upgrade. Do not delete volumes.
-2. Use this full source archive, or apply `UPGRADE_FROM_MILESTONE_12A.patch` from
-   the root of an unchanged 12A source tree. First run `git apply --check` on the
-   patch. If you have local modifications, review and merge conflicts manually.
+2. Update the working tree to the Milestone 12 source from this repository, or use
+   the full Milestone 12 source archive while preserving your existing `.env`.
+   Commit, stash, or reconcile local modifications before upgrading; do not overwrite
+   local work or remove the PostgreSQL volume.
 3. Install the locked dependencies (`uv sync --frozen` in `backend` and
    `pnpm install --frozen-lockfile` in `frontend`). The backend adds cryptography;
    the frontend adds Terser. Python 3.12 and Node 24 remain the supported setup.

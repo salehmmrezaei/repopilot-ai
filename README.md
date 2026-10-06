@@ -28,12 +28,13 @@ HTTPS deployment assets and authenticated operational metrics. See the
 [complete Milestone 12 guide](docs/milestone-12.md) and
 [deployment operations](docs/deployment-operations.md). Live integrations require configuration.
 
-**Upgrading from Milestone 12A?** Use `UPGRADE_FROM_MILESTONE_12A.patch` and migrate to
-`0016_extensions`, following the complete guide. Existing `.env` and database volumes are retained.
+**Upgrading from Milestone 12A?** Update your Git checkout to the Milestone 12 source,
+retain your existing `.env` and database volumes, then migrate to `0016_extensions`
+following the [complete Milestone 12 guide](docs/milestone-12.md).
 
-**Upgrading from Milestone 11?** Follow [the Milestone 12A guide](docs/milestone-12a.md).
-The guide distinguishes source validation from tests and live model evaluation.
-It preserves your existing `.env`, users, sessions, and PostgreSQL volume.
+**Upgrading from Milestone 11?** Follow the [Milestone 12A guide](docs/milestone-12a.md)
+first, then the Milestone 12 upgrade instructions. Preserve your existing `.env`,
+users, sessions, and PostgreSQL volume throughout the upgrade.
 
 ## Requirements
 
@@ -77,7 +78,7 @@ docker compose run --rm migrate alembic current
 ```
 
 Each HTTP call should return 200 and `{"status":"ok","service":"repopilot-api"}`.
-The migration should report `0014_execution_runs (head)`.
+The migration should report `0016_extensions (head)`.
 The frontend proxy and direct API checks deliberately use different URL prefixes.
 
 ## Verify dependency failure and recovery
@@ -276,11 +277,14 @@ shared throttling, versioned Python indexing, symbol/chunk inspection, hybrid re
 Compose, tests, and CI definition. See `docs/validation.md` for actual
 verification results and remaining gates.
 
-Next: local streaming acceptance, then fuller usage receipts and final MVP acceptance. Postponed: email
-verification/recovery, OAuth/private repositories, successful-import refresh, local model adapters, learned reranking,
-model conversation memory, streaming, complete usage receipts, agents, patches, and sandbox execution.
+Implemented through Milestone 12: repository refresh and incremental indexing/search reuse,
+GitHub OAuth and private repository access, deterministic local reranking, saved PR reviews,
+deployment assets, operational metrics, durable agents, proposals, execution and repair workflows.
 
-Suggested commit: `feat(runs): add durable background answers and idempotent submission`
+Remaining acceptance is environment-dependent: real GitHub OAuth/private repository access,
+live-model PR review quality, rootless sandbox isolation, HTTPS deployment/operations, and
+explicitly enabled paid semantic evaluation. See `docs/validation.md` for recorded results and gates.
+
 
 Revision `0008_answer_history` adds a bounded JSON history snapshot to each run.
 See [ADR 0009](docs/decisions/0009-bounded-conversation-context.md).
