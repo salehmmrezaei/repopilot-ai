@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="870" viewBox="0 0 1200 870" role="img" aria-labelledby="title desc">
+<title id="title">RepoPilot AI architecture</title><desc id="desc">React calls FastAPI. PostgreSQL stores durable state. The dispatcher reads pending work and queues Celery tasks through Redis. Workers persist results and call GitHub, an optional model provider, and an optional separate sandbox host. API also makes synchronous GitHub and provider calls.</desc>
+<defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8Z" fill="#53c6ba"/></marker><style>text{font-family:Arial,Helvetica,sans-serif}.h{font-size:22px;fill:#f4f8fc;font-weight:600}.s{font-size:16px;fill:#b9cbd8}.l{font-size:15px;fill:#74dacf}.k{font-size:13px;fill:#83a1b5;letter-spacing:2px}</style></defs>
+<rect width="1200" height="870" rx="20" fill="#0b1928"/>
+<text x="48" y="60" fill="#fff" font-size="32" font-weight="700">RepoPilot AI</text>
+<text x="48" y="95" class="s">Source-backed answers. Durable work. Explicit execution boundaries.</text>
+<text x="48" y="146" class="k">APPLICATION AND DURABLE STATE</text>
+<rect x="48" y="170" width="290" height="110" rx="14" fill="#142b40" stroke="#365166"/><text x="70" y="204" class="h">React workspace</text><text x="70" y="232" class="s">Source, search and conversations</text><text x="70" y="256" class="s">Agent activity, proposals and reviews</text>
+<rect x="448" y="170" width="290" height="110" rx="14" fill="#142b40" stroke="#365166"/><text x="470" y="204" class="h">FastAPI</text><text x="470" y="232" class="s">Sessions, ownership and contracts</text><text x="470" y="256" class="s">Search, answers, reviews and SSE</text>
+<rect x="848" y="170" width="304" height="110" rx="14" fill="#142b40" stroke="#365166"/><text x="870" y="204" class="h">PostgreSQL + pgvector</text><text x="870" y="232" class="s">Snapshots, indexes and vectors</text><text x="870" y="256" class="s">Jobs, leases, events and usage</text>
+<path d="M338 213 H448" fill="none" stroke="#53c6ba" stroke-width="2.5" marker-end="url(#arrow)"/><path d="M448 252 H338" fill="none" stroke="#53c6ba" stroke-width="2.5" marker-end="url(#arrow)"/>
+<text x="356" y="200" class="l">Requests</text><text x="366" y="274" class="l">SSE / API</text>
+<path d="M738 225 H848" fill="none" stroke="#53c6ba" stroke-width="2.5" marker-end="url(#arrow)"/>
+<text x="752" y="211" class="l">Persist</text>
+<text x="48" y="371" class="k">BACKGROUND WORK</text>
+<rect x="48" y="397" width="290" height="110" rx="14" fill="#142b40" stroke="#365166"/><text x="70" y="431" class="h">Durable dispatcher</text><text x="70" y="459" class="s">Recover and schedule pending work</text><text x="70" y="483" class="s">Advance bounded repair state</text>
+<rect x="448" y="397" width="290" height="110" rx="14" fill="#142b40" stroke="#365166"/><text x="470" y="431" class="h">Redis</text><text x="470" y="459" class="s">Celery task broker</text><text x="470" y="483" class="s">Shared request limits</text>
+<rect x="848" y="397" width="304" height="110" rx="14" fill="#142b40" stroke="#365166"/><text x="870" y="431" class="h">Celery workers</text><text x="870" y="459" class="s">Import, index, answer and investigate</text><text x="870" y="483" class="s">Proposal and execution jobs</text>
+<path d="M1000 280 V323 H193 V397" fill="none" stroke="#53c6ba" stroke-width="2.5" marker-end="url(#arrow)"/>
+<text x="474" y="314" class="l">Read durable pending work</text>
+<path d="M338 449 H448" fill="none" stroke="#53c6ba" stroke-width="2.5" marker-end="url(#arrow)"/><path d="M738 449 H848" fill="none" stroke="#53c6ba" stroke-width="2.5" marker-end="url(#arrow)"/>
+<text x="359" y="434" class="l">Enqueue</text><text x="760" y="434" class="l">Consume</text>
+<path d="M1130 397 V280" fill="none" stroke="#53c6ba" stroke-width="2.5" marker-end="url(#arrow)"/>
+<text x="1150" y="380" class="l" transform="rotate(-90 1150 380)">Persist results</text>
+<text x="48" y="590" class="k">EXTERNAL DEPENDENCIES AND ISOLATION</text>
+<rect x="48" y="635" width="325" height="110" rx="14" fill="#142b40" stroke="#365166"/><text x="70" y="669" class="h">GitHub</text><text x="70" y="697" class="s">Pinned archives and PR snapshots</text><text x="70" y="721" class="s">OAuth and private access when enabled</text>
+<rect x="438" y="635" width="325" height="110" rx="14" fill="#142b40" stroke="#365166"/><text x="460" y="669" class="h">Model provider · optional</text><text x="460" y="697" class="s">Embeddings and bounded generation</text><text x="460" y="721" class="s">Usage receipts and citation validation</text>
+<rect x="821" y="622" width="344" height="138" rx="20" fill="none" stroke="#74dacf" stroke-dasharray="6 5"/>
+<rect x="833" y="635" width="320" height="110" rx="14" fill="#142b40" stroke="#365166"/><text x="855" y="669" class="h">Separate sandbox · optional</text><text x="855" y="697" class="s">Rootless Docker; curated test profiles</text><text x="855" y="721" class="s">Approved baseline and patched runs</text>
+<path d="M996 507 V548 H210 V635" fill="none" stroke="#53c6ba" stroke-width="2.5" marker-end="url(#arrow)"/><path d="M600 548 V635" fill="none" stroke="#53c6ba" stroke-width="2.5" marker-end="url(#arrow)"/><path d="M996 548 V635" fill="none" stroke="#53c6ba" stroke-width="2.5" marker-end="url(#arrow)"/>
+<text x="64" y="819" class="s">API also calls GitHub / the provider for OAuth and synchronous PR reviews.</text>
+<text x="64" y="844" class="s">Conceptual work path · individual endpoints and secondary database connections omitted</text>
+</svg>

@@ -1,7 +1,73 @@
 # RepoPilot AI
 
-A repository-understanding application that will grow into a controlled software
-engineering agent. **Current scope: complete Milestone 12 extension source release.**
+**Understand the code. Inspect the evidence.**
+
+An AI developer tool for exploring real GitHub codebases, answering questions with
+source citations, and turning investigations into reviewable patches and bounded
+test-and-repair workflows.
+
+[Get started](#requirements) · [Architecture](#architecture) · [Milestones](#milestone-documentation) · [Validation](docs/project-status.md)
+
+![RepoPilot AI product preview: a source-backed explanation of worker cancellation](docs/assets/product-preview.png)
+
+*Illustrative, AI-generated UI preview with source-verified content—not a screenshot or recorded AI response.
+[Visual provenance and screenshot capture guide](docs/assets/README.md).*
+
+## Three capabilities
+
+- **Understand a repository.** Import pinned GitHub snapshots, index Python and TypeScript/TSX,
+  and combine keyword, symbol and optional semantic retrieval. Answers link claims to inspected source.
+- **Investigate and propose changes.** A bounded agent searches and reads code, publishes its
+  activity timeline, and produces source-checked, downloadable diffs. Saved PR reviews examine immutable snapshots.
+- **Validate and iterate under explicit control.** Approved proposals run baseline and patched
+  tests on a separate sandbox host; bounded repair preserves attempts, usage and stop reasons.
+  RepoPilot does not push changes or post reviews to GitHub.
+
+## Three measurable engineering facts
+
+| Evidence | Verified result |
+| --- | --- |
+| Backend regression suite | **358 tests passed** in the non-integration suite. |
+| Real infrastructure checks | **12 integration tests passed** with PostgreSQL/pgvector and Redis; **6 sandbox tests skipped**. |
+| Frontend regression suite | **69 tests passed across 16 files**. |
+
+Recorded in [GitHub Actions run #65](https://github.com/salehmmrezaei/repopilot-ai/actions/runs/37426995740) on **6 October 2026** at
+[`6fcaab0`](https://github.com/salehmmrezaei/repopilot-ai/commit/6fcaab0d7cbd61cd38de80a745669090b12d2f38).
+These are test results, not coverage percentages or model-quality scores.
+
+## Architecture
+
+![RepoPilot AI architecture: React and FastAPI backed by PostgreSQL, durable dispatch, Redis, Celery workers and optional external services](docs/assets/architecture.svg)
+
+A modular monolith keeps source snapshots, job leases, events and usage receipts in PostgreSQL.
+The dispatcher recovers durable work and schedules Celery tasks through Redis.
+Workers import, index, retrieve and run bounded AI workflows; the UI receives persisted progress over SSE.
+Optional test execution crosses a separate sandbox boundary.
+[Design decisions](docs/decisions/) · [Security model](docs/security.md) · [Deployment](docs/deployment-operations.md)
+
+## Project status
+
+**Milestones 1–12 are implemented in the source release, and the reviewed main-branch CI run passed.**
+Live OAuth/private access, model quality, rootless sandbox acceptance and HTTPS operations
+still require environment-specific verification. See the [completion review](docs/project-status.md)
+for evidence and remaining gates.
+
+## Milestone documentation
+
+| Stage | Implementation and design |
+| --- | --- |
+| Foundation and access | [Architecture decision](docs/decisions/0001-modular-monolith.md), [authentication](docs/milestone-2.md), [imports](docs/milestone-3.md) |
+| Code understanding | [Python indexing](docs/milestone-4.md), [hybrid search](docs/milestone-5.md), [grounded Q&A](docs/milestone-6.md) |
+| Durable conversations | [History](docs/milestone-7a.md), [background runs](docs/milestone-7b.md), [bounded context](docs/milestone-7c1.md), [SSE events](docs/milestone-7c2a.md), [streaming](docs/milestone-7c2b.md), [usage receipts](docs/milestone-7c3.md) |
+| Engineering workflows | [Investigation](docs/milestone-8.md), [patch proposals](docs/milestone-9.md), [isolated execution](docs/milestone-10.md), [repair and coding evaluation](docs/milestone-11.md) |
+| Extensions | [TypeScript/TSX](docs/milestone-12a.md), [refresh, OAuth, PR review and operations](docs/milestone-12.md) |
+
+[Full roadmap](docs/roadmap.md) · [Historical validation](docs/validation.md) · [Evaluation methodology](docs/evaluation.md)
+
+<details>
+<summary>Detailed implementation overview and upgrade notes</summary>
+
+A repository-understanding application with controlled software engineering workflows. **Current scope: complete Milestone 12 extension source release.**
 React/TypeScript/Vite, FastAPI, PostgreSQL/pgvector, Redis, Celery, and a durable
 job dispatcher now support authenticated imports, progress, and basic source browsing.
 Static Python and TypeScript/TSX indexing, a React source/search inspector, keyword/symbol retrieval and optional
@@ -36,6 +102,8 @@ following the [complete Milestone 12 guide](docs/milestone-12.md).
 first, then the Milestone 12 upgrade instructions. Preserve your existing `.env`,
 users, sessions, and PostgreSQL volume throughout the upgrade.
 
+</details>
+
 ## Requirements
 
 For the complete local stack: Docker Engine/Desktop with Docker Compose v2.
@@ -45,9 +113,10 @@ keyword/symbol search. Semantic search and AI answers are explicitly opt-in; see
 
 ## Start the stack
 
-From the extracted project directory:
+Clone the repository, then prepare local configuration:
 
 ```bash
+git clone https://github.com/salehmmrezaei/repopilot-ai.git
 cd repopilot-ai
 cp .env.example .env
 ```
