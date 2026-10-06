@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from urllib.parse import quote
+from urllib.parse import quote, urlsplit
 
 import httpx
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
@@ -30,16 +30,33 @@ class RepositorySource:
 
 
 class GitHubClient:
-    def __init__(self, client: httpx.AsyncClient, archive_limit: int) -> None:
+    def __init__(
+        self, client: httpx.AsyncClient, archive_limit: int, token: str | None = None
+    ) -> None:
         self.client, self.archive_limit = client, archive_limit
+        self.token = token
 
     async def _get(self, url: str, limit: int) -> bytes:
+        parsed = urlsplit(url)
+        if (
+            parsed.scheme != "https"
+            or parsed.hostname not in {"api.github.com", "codeload.github.com"}
+            or parsed.username
+            or parsed.password
+            or parsed.port not in {None, 443}
+        ):
+            raise ImportFailure("github_invalid_url", "Invalid GitHub endpoint.")
         try:
             async with self.client.stream(
                 "GET",
                 url,
                 follow_redirects=False,
                 headers={
+                    **(
+                        {"Authorization": f"Bearer {self.token}"}
+                        if self.token and parsed.hostname == "api.github.com"
+                        else {}
+                    ),
                     "Accept": "application/vnd.github+json",
                     "User-Agent": "RepoPilot-AI",
                     "X-GitHub-Api-Version": "2026-03-10",
@@ -93,7 +110,7 @@ class GitHubClient:
             meta = Metadata.model_validate_json(
                 await self._get(f"https://api.github.com/repos/{owner}/{name}", 1024 * 1024)
             )
-            if meta.private:
+            if meta.private and self.token is None:
                 raise ImportFailure("private_repository", "Only public repositories are supported.")
             canonical_owner, canonical_name = parse_repository_url(
                 "https://github.com/" + meta.full_name
@@ -114,6 +131,38 @@ class GitHubClient:
             ) from exc
 
     async def download(self, source: RepositorySource) -> bytes:
+        if self.token:
+            # Obtain a short-lived signed archive URL; never forward the OAuth token.
+            url = f"https://api.github.com/repos/{source.owner}/{source.name}/tarball/{source.sha}"
+            try:
+                async with self.client.stream(
+                    "GET",
+                    url,
+                    follow_redirects=False,
+                    headers={
+                        "Authorization": f"Bearer {self.token}",
+                        "Accept": "application/vnd.github+json",
+                    },
+                ) as response:
+                    location = response.headers.get("location", "")
+                    parsed = urlsplit(location)
+                    if (
+                        response.status_code != 302
+                        or parsed.scheme != "https"
+                        or parsed.hostname != "codeload.github.com"
+                        or parsed.username
+                        or parsed.password
+                        or parsed.port not in {None, 443}
+                    ):
+                        raise ImportFailure(
+                            "github_archive_denied",
+                            "GitHub archive is unavailable. Reconnect GitHub and retry.",
+                        )
+                return await self._get(location, self.archive_limit)
+            except httpx.HTTPError:
+                raise ImportFailure(
+                    "github_network_error", "GitHub request failed.", True
+                ) from None
         return await self._get(
             f"https://codeload.github.com/{source.owner}/{source.name}/tar.gz/{source.sha}",
             self.archive_limit,

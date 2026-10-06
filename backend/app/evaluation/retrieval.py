@@ -54,6 +54,7 @@ async def benchmark(
     mode: str = "keyword",
     allow_paid: bool = False,
     dataset_path: Path = DATASET,
+    rerank: bool = False,
 ) -> dict[str, object]:
     if not settings.database_url.get_secret_value().split("?")[0].endswith("_test"):
         raise ValueError("Evaluation requires a dedicated database whose name ends in _test")
@@ -94,7 +95,9 @@ async def benchmark(
                 async with factory() as db:
                     recorder = RecordingCandidates(PostgresCandidates(db))
                     result = await SearchService(db, recorder, limiter, settings, provider).search(
-                        user_id, repo_id, SearchRequest(query=case.query, mode=mode, top_k=8)
+                        user_id,
+                        repo_id,
+                        SearchRequest(query=case.query, mode=mode, top_k=8, rerank=rerank),
                     )
                 latencies.append(result.duration_ms)
                 query_tokens += result.query_tokens
@@ -139,6 +142,7 @@ async def benchmark(
                 "source_pipeline_version": PIPELINE_VERSION,
                 "provider_profile": job.provider_profile,
                 "mode": mode,
+                "reranker": result.reranker,
                 "tiktoken_version": version("tiktoken"),
                 "semantic_api_called": mode == "hybrid",
                 "case_count": len(cases),
@@ -203,6 +207,7 @@ def main() -> None:
     parser.add_argument("--dataset", type=Path, default=DATASET)
     parser.add_argument("--check", action="store_true")
     parser.add_argument("--mode", choices=["keyword", "hybrid"], default="keyword")
+    parser.add_argument("--rerank", action="store_true")
     parser.add_argument("--allow-paid", action="store_true")
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
@@ -212,7 +217,9 @@ def main() -> None:
         return
     if args.output is None:
         parser.error("--output is required for a database benchmark")
-    report = asyncio.run(benchmark(Settings(), args.mode, args.allow_paid, args.dataset))
+    report = asyncio.run(
+        benchmark(Settings(), args.mode, args.allow_paid, args.dataset, args.rerank)
+    )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, indent=2) + "\n")
     print(json.dumps(report["metrics"], indent=2))

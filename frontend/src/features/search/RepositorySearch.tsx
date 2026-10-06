@@ -23,6 +23,7 @@ export function RepositorySearch({ repositoryId, csrf, onExpired }: Props) {
   const [pending, setPending] = useState(false);
   const [searching, setSearching] = useState(false);
   const [query, setQuery] = useState('');
+  const [rerank, setRerank] = useState(false);
   const [mode, setMode] = useState<SearchMode>('keyword');
   const [result, setResult] = useState<SearchResult | null>(null);
   const request = useRef<AbortController | null>(null);
@@ -103,6 +104,7 @@ export function RepositorySearch({ repositoryId, csrf, onExpired }: Props) {
         mode,
         csrf,
         controller.signal,
+        rerank,
       );
       if (!controller.signal.aborted) setResult(found);
     } catch (reason) {
@@ -206,6 +208,14 @@ export function RepositorySearch({ repositoryId, csrf, onExpired }: Props) {
         </p>
       )}
       {searching && <p role="status">Retrieving source…</p>}
+      <label>
+        <input
+          type="checkbox"
+          checked={rerank}
+          onChange={(e) => setRerank(e.target.checked)}
+        />{' '}
+        Rerank results using local relevance scoring (no model cost)
+      </label>
       {result && <SearchResults result={result} />}
     </section>
   );

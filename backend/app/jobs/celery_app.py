@@ -45,6 +45,7 @@ async def execute(job_id: UUID) -> None:
                 GitHubClient(client, settings.import_download_bytes),
                 job_id,
                 settings.import_timeout_seconds,
+                settings,
             )
     finally:
         await engine.dispose()

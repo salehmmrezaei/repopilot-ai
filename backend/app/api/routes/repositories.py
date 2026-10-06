@@ -88,3 +88,10 @@ async def read_file(
     repository_id: UUID, file_id: UUID, identity: Reader, service: Service
 ) -> FileContentResponse:
     return await service.content(identity.user.id, repository_id, file_id)
+
+
+@router.post("/{repository_id}/refresh", status_code=202, response_model=RepositoryResponse)
+async def refresh_repository(
+    repository_id: UUID, identity: Writer, service: Service
+) -> RepositoryResponse:
+    return await service.refresh(identity.user.id, repository_id)

@@ -22,7 +22,7 @@ class PreparationService:
         self.store = SearchStore(db)
 
     async def source(self, user_id: UUID, repository_id: UUID) -> RepositoryIndex:
-        _, imported = await RepositoryStore(self.db).owned(user_id, repository_id)
+        _, imported = await RepositoryStore(self.db).source(user_id, repository_id)
         source = await IndexStore(self.db).active(repository_id, imported.id)
         if source is None:
             raise AppError("index_required", "Build the static source index first.", 409)

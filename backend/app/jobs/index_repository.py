@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.indexing.errors import ImportFailure, LeaseLost
 from app.indexing.pipeline import PIPELINE_VERSION, index_source
+from app.indexing.reuse import reusable_sources
 from app.jobs.state import Claim, claim_job, lease_condition, report_stage
 from app.models import CodeChunk, CodeSymbol, RepositoryFile, RepositoryIndex
 
@@ -23,6 +24,7 @@ async def publish_index(
     chunks: list[CodeChunk],
     diagnostics: list[dict[str, str]],
     file_count: int,
+    reused: int = 0,
 ) -> None:
     async with factory() as db:
         found = await db.scalar(
@@ -36,6 +38,7 @@ async def publish_index(
                 lease_expires_at=None,
                 files_scanned=file_count,
                 files_stored=file_count,
+                files_skipped=reused,
                 symbol_count=len(symbols),
                 chunk_count=len(chunks),
                 diagnostics=diagnostics,
@@ -71,6 +74,7 @@ async def run_index(
                         "index_version_mismatch",
                         "Restart workers using the current application image.",
                     )
+                cached = await reusable_sources(db, job)
                 source_job = job.import_job_id
                 files = list(
                     (
@@ -88,10 +92,15 @@ async def run_index(
             chunks: list[CodeChunk] = []
             diagnostics: list[dict[str, str]] = []
             await report_stage(factory, claim, "parsing", RepositoryIndex)
+            reused = 0
             for file in files:
-                result = await asyncio.to_thread(
-                    index_source, file.content, file.language, file.path
-                )
+                result = cached.get((file.path, file.language, file.content))
+                if result is None:
+                    result = await asyncio.to_thread(
+                        index_source, file.content, file.language, file.path
+                    )
+                else:
+                    reused += 1
                 if (
                     len(symbols) + len(result.symbols) > 10000
                     or len(chunks) + len(result.chunks) > 10000
@@ -123,7 +132,7 @@ async def run_index(
                     for chunk in result.chunks
                 )
             await report_stage(factory, claim, "storing", RepositoryIndex)
-            await publish_index(factory, claim, symbols, chunks, diagnostics, len(files))
+            await publish_index(factory, claim, symbols, chunks, diagnostics, len(files), reused)
         logger.info(
             "index_completed",
             extra={

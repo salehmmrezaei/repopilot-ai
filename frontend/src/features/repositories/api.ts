@@ -59,7 +59,7 @@ export async function createRepository(
 }
 export async function repositoryAction(
   id: string,
-  action: 'retry' | 'cancel' | 'delete',
+  action: 'retry' | 'refresh' | 'cancel' | 'delete',
   csrf: string,
 ): Promise<void> {
   await requestJSON(

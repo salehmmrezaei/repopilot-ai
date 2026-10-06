@@ -25,18 +25,21 @@ records the React + TypeScript + Vite change from the proposed Next.js frontend.
     Deployment acceptance remains documented in milestone-10.md.
 11. Bounded repair loop and coding benchmark — implemented; user reported local completion.
     See milestone-11.md for the separately authorized live evaluation procedure.
-12. Extensions individually:
-    - 12A: TypeScript/TSX static symbols, search and source browser — implemented;
-      see milestone-12a.md for validation and upgrade/rebuild instructions.
-    - 12B: incremental indexing — next, not yet implemented.
-    - Remaining extensions: OAuth/private repositories, reranking, PR review,
-      deployment and deeper observability — not yet implemented.
+12. Extensions — implemented in the complete Milestone 12 source release:
+    - 12A: TypeScript/TSX static symbols, search and source browser.
+    - Refresh and incremental source/search reuse.
+    - GitHub OAuth sign-in/linking and private repository access.
+    - Optional deterministic local reranking and comparison benchmark flag.
+    - Bounded, saved PR reviews with pinned evidence and usage.
+    - HTTPS production deployment assets and authenticated operational metrics/alerts.
+    See milestone-12.md for upgrade instructions, limits and live activation gates.
 
 Milestones 1–7 deliver the initial repository-understanding MVP. Evaluation starts
 with retrieval, background jobs start with import, and authorization starts before
 user repositories. No major milestone advances without a clear validation gate.
 
 Postponed after Milestone 7: React Query, Tailwind/shadcn, routing, local embedding adapter, learned reranking,
-invoice reconciliation and indexing/standalone-call receipts, successful-import refresh, email verification/recovery and OAuth.
+invoice reconciliation and indexing/standalone-call receipts, email verification/recovery.
+Refresh and OAuth were subsequently implemented in Milestone 12.
 Isolated execution was subsequently added in Milestone 10.
 These are intentionally absent, not stub implementations.

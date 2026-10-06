@@ -1,7 +1,7 @@
 # RepoPilot AI
 
 A repository-understanding application that will grow into a controlled software
-engineering agent. **Current scope: Milestone 12A, TypeScript/TSX static indexing and symbol search implemented.**
+engineering agent. **Current scope: complete Milestone 12 extension source release.**
 React/TypeScript/Vite, FastAPI, PostgreSQL/pgvector, Redis, Celery, and a durable
 job dispatcher now support authenticated imports, progress, and basic source browsing.
 Static Python and TypeScript/TSX indexing, a React source/search inspector, keyword/symbol retrieval and optional
@@ -21,6 +21,15 @@ archives, fresh baseline/patched containers and durable bounded test receipts. F
 seed a reviewed revision proposal. An explicitly authorized repair loop can test and revise
 up to twice, preserving every attempt, usage receipt and stop reason. Original repositories
 are never changed. A four-task coding benchmark produces JSON and an HTML dashboard.
+
+Milestone 12 adds repository refresh and incremental parser/embedding reuse, GitHub
+OAuth and private access, optional local reranking, saved bounded PR reviews,
+HTTPS deployment assets and authenticated operational metrics. See the
+[complete Milestone 12 guide](docs/milestone-12.md) and
+[deployment operations](docs/deployment-operations.md). Live integrations require configuration.
+
+**Upgrading from Milestone 12A?** Use `UPGRADE_FROM_MILESTONE_12A.patch` and migrate to
+`0016_extensions`, following the complete guide. Existing `.env` and database volumes are retained.
 
 **Upgrading from Milestone 11?** Follow [the Milestone 12A guide](docs/milestone-12a.md).
 The guide distinguishes source validation from tests and live model evaluation.

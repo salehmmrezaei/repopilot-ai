@@ -25,6 +25,40 @@ class Settings(BaseSettings):
             raise ValueError("must be a redis:// or rediss:// connection URL")
         return value
 
+    metrics_token: SecretStr | None = None
+
+    github_oauth_enabled: bool = False
+    github_client_id: str = ""
+    github_client_secret: SecretStr | None = None
+    github_token_key: SecretStr | None = None
+    github_callback_url: str = "http://localhost:3000/api/auth/github/callback"
+
+    @model_validator(mode="after")
+    def github_configuration(self) -> "Settings":
+        if self.github_oauth_enabled:
+            from cryptography.fernet import Fernet
+
+            if (
+                not self.github_client_id
+                or not self.github_client_secret
+                or not self.github_token_key
+            ):
+                raise ValueError("GitHub OAuth requires client ID, secret and encryption key")
+            Fernet(self.github_token_key.get_secret_value().encode())
+            u = urlsplit(self.github_callback_url)
+            if (
+                u.scheme not in {"http", "https"}
+                or not u.hostname
+                or u.username
+                or u.password
+                or u.query
+                or u.fragment
+            ):
+                raise ValueError("Invalid GitHub callback URL")
+            if self.environment == "production" and u.scheme != "https":
+                raise ValueError("Production OAuth requires HTTPS")
+        return self
+
     executions_enabled: bool = False
     sandbox_url: str = "https://sandbox.invalid"
     sandbox_token: SecretStr | None = None

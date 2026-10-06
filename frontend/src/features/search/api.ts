@@ -81,6 +81,7 @@ export async function querySearch(
   mode: SearchMode,
   csrf: string,
   signal: AbortSignal,
+  rerank = false,
 ): Promise<SearchResult> {
   return response.parse(
     await requestJSON(`/repositories/${id}/search/query`, {
@@ -89,6 +90,7 @@ export async function querySearch(
       body: JSON.stringify({
         query,
         mode,
+        rerank,
         top_k: 8,
         context_token_budget: 6000,
       }),

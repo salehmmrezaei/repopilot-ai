@@ -12,6 +12,7 @@ class PrepareRequest(BaseModel):
 
 
 class SearchRequest(PrepareRequest):
+    rerank: bool = False
     query: str = Field(min_length=1, max_length=512)
     top_k: int = Field(default=8, ge=1, le=20)
     context_token_budget: int = Field(default=6000, ge=100, le=12000)
@@ -75,6 +76,7 @@ class Evidence(BaseModel):
 
 
 class SearchResponse(BaseModel):
+    reranker: str = "none"
     search_index_id: UUID
     source_index_id: UUID
     commit_sha: str

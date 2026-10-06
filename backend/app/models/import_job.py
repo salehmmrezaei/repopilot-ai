@@ -35,6 +35,7 @@ class ImportJob(Base):
         ),
         Index("ix_import_jobs_dispatch", "status", "available_at"),
     )
+    commit_sha: Mapped[str | None] = mapped_column(String(40))
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     repository_id: Mapped[UUID] = mapped_column(ForeignKey("repositories.id", ondelete="CASCADE"))
     is_current: Mapped[bool] = mapped_column(Boolean, default=True, server_default=text("true"))

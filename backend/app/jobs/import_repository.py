@@ -6,9 +6,11 @@ from uuid import UUID
 from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from app.core.config import Settings
 from app.indexing.archive import ArchiveResult, read_archive
 from app.indexing.errors import ImportFailure, LeaseLost
 from app.integrations.github.client import GitHubClient, RepositorySource
+from app.integrations.github.credentials import repository_token
 from app.jobs.state import Claim, claim_job, lease_condition, report_stage
 from app.models import ImportJob, Repository, RepositoryFile
 
@@ -32,6 +34,7 @@ async def publish_result(
                 finished_at=datetime.now(UTC),
                 lease_token=None,
                 lease_expires_at=None,
+                commit_sha=source.sha,
                 files_scanned=result.scanned,
                 files_skipped=result.skipped,
                 files_stored=len(result.files),
@@ -97,6 +100,7 @@ async def run_import(
     github: GitHubClient,
     job_id: UUID,
     timeout_seconds: int,
+    settings: "Settings | None" = None,
 ) -> None:
     claim = await claim_job(factory, job_id)
     if claim is None:
@@ -104,6 +108,9 @@ async def run_import(
     logger.info("import_started", extra={"job_id": str(job_id), "attempt": claim.attempt})
     try:
         async with asyncio.timeout(timeout_seconds):
+            if settings is not None:
+                async with factory() as db:
+                    github.token = await repository_token(db, settings, claim.repository_id)
             source = await github.resolve(claim.owner, claim.name)
             await report_stage(factory, claim, "downloading")
             archive = await github.download(source)

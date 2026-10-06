@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { RepositoryWorkspace } from '../repositories/RepositoryWorkspace';
 import { SystemStatus } from '../system/SystemStatus';
+import { GitHubConnection } from './GitHubConnection';
 import { AuthForm } from './AuthForm';
 import { AuthError, getSession, logout } from './api';
 import type { AuthSession } from './types';
@@ -103,6 +104,7 @@ export function AuthWorkspace() {
             setState({ kind: 'authenticated', session })
           }
         />
+        <GitHubConnection />
         <section className="next-card">
           <span className="eyebrow">START WITH CLARITY</span>
           <h2>A home for your codebase knowledge.</h2>
@@ -142,6 +144,7 @@ export function AuthWorkspace() {
         </section>
         <SystemStatus />
       </div>
+      <GitHubConnection csrf={state.session.csrf_token} />
       <RepositoryWorkspace
         csrf={state.session.csrf_token}
         onExpired={expireSession}

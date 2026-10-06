@@ -13,6 +13,7 @@ from app.core.config import Settings
 from app.core.errors import AppError
 from app.execution.contracts import SandboxRequest, SandboxResult
 from app.integrations.github.client import GitHubClient, RepositorySource
+from app.integrations.github.credentials import repository_token
 from app.models import AgentRun, Conversation, ExecutionRun, Repository
 from app.repair.guards import require_active
 
@@ -79,6 +80,7 @@ async def run_execution(
                 source = RepositorySource(
                     repo.github_repository_id or 0, repo.owner, repo.name, "", agent.commit_sha
                 )
+                github.token = await repository_token(db, settings, repo.id)
                 profile = run.profile
             archive = await github.download(source)  # exact immutable commit; never default branch
             body = SandboxRequest.model_validate(

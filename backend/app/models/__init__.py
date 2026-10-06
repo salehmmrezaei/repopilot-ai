@@ -37,3 +37,7 @@ __all__ = [
     "SearchIndex",
     "SearchDocument",
 ]
+
+from app.models.github import GitHubAccount as GitHubAccount
+from app.models.github import OAuthState as OAuthState
+from app.models.review import PullReview as PullReview

@@ -111,6 +111,29 @@ class RepositoryService:
         await self.db.commit()
         return result
 
+    async def refresh(self, user_id: UUID, repository_id: UUID) -> RepositoryResponse:
+        await self.limiter.check([Limit("imports:user:" + str(user_id), 5, 3600)])
+        await self._quota(user_id)
+        repo, job = await self.store.owned(user_id, repository_id)
+        changed = await self.db.scalar(
+            update(ImportJob)
+            .where(
+                ImportJob.id == job.id,
+                ImportJob.is_current.is_(True),
+                ImportJob.status == "completed",
+            )
+            .values(is_current=False)
+            .returning(ImportJob.id)
+        )
+        if changed is None:
+            raise AppError("invalid_job_state", "Refresh requires a completed import.", 409)
+        new_job = ImportJob(repository_id=repo.id)
+        self.db.add(new_job)
+        await self.db.flush()
+        result = self.response(repo, new_job)
+        await self.db.commit()
+        return result
+
     async def cancel(self, user_id: UUID, repository_id: UUID) -> None:
         _, job = await self.store.owned(user_id, repository_id)
         changed = await self.db.scalar(
@@ -137,7 +160,7 @@ class RepositoryService:
         await self.db.commit()
 
     async def files(self, user_id: UUID, repository_id: UUID, offset: int, limit: int) -> FilePage:
-        _, job = await self.store.owned(user_id, repository_id)
+        _, job = await self.store.source(user_id, repository_id)
         rows = list(
             (
                 await self.db.scalars(
@@ -160,7 +183,7 @@ class RepositoryService:
     async def content(
         self, user_id: UUID, repository_id: UUID, file_id: UUID
     ) -> FileContentResponse:
-        repo, job = await self.store.owned(user_id, repository_id)
+        repo, job = await self.store.source(user_id, repository_id)
         file = (
             await self.db.scalars(
                 select(RepositoryFile).where(
@@ -175,5 +198,5 @@ class RepositoryService:
         return FileContentResponse(
             **FileResponse.model_validate(file).model_dump(),
             content=file.content,
-            commit_sha=repo.last_commit_sha,
+            commit_sha=job.commit_sha or repo.last_commit_sha,
         )
