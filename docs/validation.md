@@ -471,3 +471,30 @@ real TypeScript retrieval quality measurement, rootless Docker execution, browse
 hosted CI or paid model evaluation. The 18 skipped cases include the previous 17 infrastructure
 cases and one new PostgreSQL TypeScript-symbol retrieval test. No retrieval-quality score,
 TypeScript compiler/type-check support or general TypeScript sandbox compatibility is claimed.
+
+## Milestone 12 complete extension release — 2026-10-05
+
+- Backend: **358 passed, 18 skipped**, two upstream FastAPI/Starlette deprecation
+  warnings. Includes the full prior suite plus refresh/parser/vector reuse,
+  OAuth state/CSRF/replay/encryption, signed archive token isolation, PR review
+  snapshot/idempotency/usage/citation checks, metrics and local reranking tests.
+- Ruff lint and formatting passed (253 Python files); mypy passed (173 modules).
+- Frontend: **69 passed across 16 files**. TypeScript, ESLint and Prettier passed.
+- Standard `pnpm build` passed with Terser JavaScript minification and CSS
+  minification disabled: 152 modules; approximately 397 kB JavaScript and 11 kB CSS
+  before compression. The prior native minifier crash is avoided by this configuration.
+- Alembic offline upgrade SQL generated successfully through `0016_extensions`.
+  This checks migration generation, not execution against PostgreSQL.
+- Production Compose, Prometheus and alert files parsed as YAML. Docker runtime
+  and target-host Compose/Caddy validation were not available here.
+- TypeScript retrieval fixture check passed: ten cases, four files, 21 symbols,
+  19 chunks; no provider calls. CI adds the free reranked retrieval comparison.
+  No live retrieval quality score or paid PR review result is claimed.
+- Full source archive and exact upgrade patch from 12A are packaged; the patch is
+  checked, applied to a fresh 12A extraction, and compared against final source.
+
+The 18 skipped tests require PostgreSQL, Redis/queue infrastructure or an explicitly
+configured isolated execution environment. Real OAuth/private-access acceptance,
+production migration, sandbox isolation, HTTPS deployment and live model quality
+remain environment activation checks documented in `milestone-12.md` and
+`deployment-operations.md`. No deployment or external GitHub write was performed.

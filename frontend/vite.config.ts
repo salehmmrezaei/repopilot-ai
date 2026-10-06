@@ -19,6 +19,8 @@ export default defineConfig(({ mode }) => {
   }
   return {
     plugins: [react()],
+    // Terser avoids the native JS minifier; preserve the small CSS bundle as-is.
+    build: { minify: 'terser', cssMinify: false },
     server: {
       port: 3000,
       strictPort: true,

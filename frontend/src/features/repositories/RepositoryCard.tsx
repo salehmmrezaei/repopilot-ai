@@ -2,7 +2,7 @@ import type { Repository } from './api';
 interface Props {
   repository: Repository;
   pending: boolean;
-  onAction: (action: 'retry' | 'cancel' | 'delete') => void;
+  onAction: (action: 'retry' | 'refresh' | 'cancel' | 'delete') => void;
   onOpen: () => void;
 }
 export function RepositoryCard({
@@ -38,8 +38,11 @@ export function RepositoryCard({
         <p className="form-error">{repo.job.error_message}</p>
       )}
       <div className="repository-actions">
+        {repo.last_commit_sha && <button onClick={onOpen}>Browse files</button>}
         {repo.job.status === 'completed' && (
-          <button onClick={onOpen}>Browse files</button>
+          <button disabled={pending} onClick={() => onAction('refresh')}>
+            Refresh from GitHub
+          </button>
         )}
         {active && (
           <button disabled={pending} onClick={() => onAction('cancel')}>

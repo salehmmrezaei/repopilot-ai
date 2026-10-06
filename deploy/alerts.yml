@@ -1,0 +1,23 @@
+groups:
+  - name: repopilot
+    rules:
+      - alert: RepoPilotUnavailable
+        expr: up{job="repopilot"} == 0
+        for: 2m
+        labels: {severity: critical}
+        annotations: {summary: 'RepoPilot metrics scrape is failing; check API, database, token and network.'}
+      - alert: RepoPilotQueueStalled
+        expr: repopilot_oldest_pending_seconds > 600
+        for: 5m
+        labels: {severity: warning}
+        annotations: {summary: 'RepoPilot work is pending beyond ten minutes; inspect dispatcher and workers.'}
+      - alert: RepoPilotServerErrors
+        expr: sum(rate(repopilot_http_seconds_count{status="5xx"}[5m])) / clamp_min(sum(rate(repopilot_http_seconds_count[5m])), 0.001) > 0.05
+        for: 5m
+        labels: {severity: warning}
+        annotations: {summary: 'RepoPilot server error rate exceeds five percent.'}
+      - alert: RepoPilotSlowAPI
+        expr: histogram_quantile(0.95, sum by (le) (rate(repopilot_http_seconds_bucket[5m]))) > 30
+        for: 10m
+        labels: {severity: warning}
+        annotations: {summary: 'RepoPilot p95 HTTP latency exceeds thirty seconds.'}

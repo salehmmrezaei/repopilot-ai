@@ -27,3 +27,5 @@ backend/evaluation/proposals/reports/
 **/pytest-of-root/
 
 backend/evaluation/coding/reports/
+
+.env.production

@@ -37,3 +37,16 @@ class RepositoryStore:
             )
         ).all()
         return [(row[0], row[1]) for row in rows]
+
+    async def source(self, user_id: UUID, repository_id: UUID) -> tuple[Repository, ImportJob]:
+        repo, current = await self.owned(user_id, repository_id)
+        completed = await self.db.scalar(
+            select(ImportJob)
+            .where(
+                ImportJob.repository_id == repository_id,
+                ImportJob.status == "completed",
+            )
+            .order_by(ImportJob.finished_at.desc(), ImportJob.created_at.desc(), ImportJob.id)
+            .limit(1)
+        )
+        return repo, completed or current

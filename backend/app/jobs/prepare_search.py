@@ -93,6 +93,29 @@ async def run_preparation(
                         "Enable the matching embedding provider before retrying.",
                         409,
                     )
+                cached: dict[str, SearchDocument] = {}
+                previous = await db.scalar(
+                    select(SearchIndex)
+                    .where(
+                        SearchIndex.repository_id == job.repository_id,
+                        SearchIndex.id != job.id,
+                        SearchIndex.status == "completed",
+                        SearchIndex.mode == job.mode,
+                        SearchIndex.provider_profile == job.provider_profile,
+                        SearchIndex.pipeline_version == job.pipeline_version,
+                    )
+                    .order_by(SearchIndex.finished_at.desc(), SearchIndex.id)
+                    .limit(1)
+                )
+                if previous:
+                    cached = {
+                        d.input_hash: d
+                        for d in await db.scalars(
+                            select(SearchDocument).where(
+                                SearchDocument.search_index_id == previous.id,
+                            )
+                        )
+                    }
                 chunks = await SearchStore(db).chunks(job.source_index_id)
                 done = set(
                     (
@@ -104,6 +127,29 @@ async def run_preparation(
                     ).all()
                 )
             pending = [c for c in chunks if c.id not in done]
+            reused: list[SearchDocument] = []
+            fresh = []
+            for chunk in pending:
+                value = embedding_text(chunk.path, chunk.name, chunk.signature, chunk.content)
+                key = sha256(value.encode()).hexdigest()
+                old = cached.get(key)
+                if old is not None and (job.mode == "keyword" or old.embedding is not None):
+                    reused.append(
+                        SearchDocument(
+                            search_index_id=job_id,
+                            source_index_id=job.source_index_id,
+                            chunk_id=chunk.id,
+                            search_text=lexical_text(value),
+                            input_hash=key,
+                            token_count=old.token_count,
+                            embedding=old.embedding,
+                        )
+                    )
+                else:
+                    fresh.append(chunk)
+            for offset in range(0, len(reused), 100):
+                await checkpoint(factory, claim, reused[offset : offset + 100], 0)
+            pending = fresh
             tokenizer = (
                 provider.tokenize if job.mode == "hybrid" and provider is not None else token_parts
             )

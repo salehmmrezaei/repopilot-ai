@@ -29,7 +29,7 @@ class IndexService:
         )
 
     async def state(self, user_id: UUID, repository_id: UUID) -> IndexState:
-        _, source = await self.repositories.owned(user_id, repository_id)
+        _, source = await self.repositories.source(user_id, repository_id)
         latest = await self.store.latest(repository_id, source.id)
         active = await self.store.active(repository_id, source.id)
         return IndexState(
@@ -46,7 +46,7 @@ class IndexService:
             .where(Repository.id == repository_id, Repository.user_id == user_id)
             .with_for_update()
         )
-        repo, source = await self.repositories.owned(user_id, repository_id)
+        repo, source = await self.repositories.source(user_id, repository_id)
         if source.status != "completed" or repo.last_commit_sha is None:
             raise AppError("import_required", "Complete the repository import first.", 409)
         latest = await self.store.latest(repository_id, source.id)
@@ -55,13 +55,34 @@ class IndexService:
         if latest and latest.status == "completed" and latest.pipeline_version == PIPELINE_VERSION:
             return IndexResponse.model_validate(latest), False
         await self.limiter.check([Limit("indexes:user:" + str(user_id), 5, 60)])
-        if latest:
-            latest.is_current = False
-            await self.db.flush()
+        await self.db.execute(
+            update(RepositoryIndex)
+            .where(
+                RepositoryIndex.repository_id == repository_id,
+                RepositoryIndex.is_current.is_(True),
+                RepositoryIndex.status.in_(["queued", "running"]),
+            )
+            .values(
+                status="cancelled",
+                stage="superseded",
+                lease_token=None,
+                lease_expires_at=None,
+                finished_at=datetime.now(UTC),
+            )
+        )
+        await self.db.execute(
+            update(RepositoryIndex)
+            .where(
+                RepositoryIndex.repository_id == repository_id,
+                RepositoryIndex.is_current.is_(True),
+            )
+            .values(is_current=False)
+        )
+        await self.db.flush()
         job = RepositoryIndex(
             repository_id=repository_id,
             import_job_id=source.id,
-            commit_sha=repo.last_commit_sha,
+            commit_sha=source.commit_sha or repo.last_commit_sha,
             pipeline_version=PIPELINE_VERSION,
         )
         self.db.add(job)
@@ -71,7 +92,7 @@ class IndexService:
         return result, True
 
     async def cancel(self, user_id: UUID, repository_id: UUID) -> None:
-        _, source = await self.repositories.owned(user_id, repository_id)
+        _, source = await self.repositories.source(user_id, repository_id)
         found = await self.db.scalar(
             update(RepositoryIndex)
             .where(
@@ -101,7 +122,7 @@ class IndexService:
         symbol_offset: int,
         chunk_offset: int,
     ) -> IndexedFilePage:
-        _, source = await self.repositories.owned(user_id, repository_id)
+        _, source = await self.repositories.source(user_id, repository_id)
         file = await self.store.file(file_id, source.id)
         if file is None:
             raise AppError("not_found", "File not found.", 404)

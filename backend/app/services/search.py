@@ -14,6 +14,8 @@ from app.repositories.search import SearchStore
 from app.retrieval.context import build_context
 from app.retrieval.contracts import CandidateStore
 from app.retrieval.ranking import fuse
+from app.retrieval.reranking import VERSION as RERANK_VERSION
+from app.retrieval.reranking import rerank
 from app.retrieval.text import VERSION, query_terms, symbol_terms
 from app.schemas.search import SearchHit, SearchRequest, SearchResponse
 from app.services.search_preparation import PreparationService
@@ -129,9 +131,11 @@ class SearchService:
         chunks = {c.id: c for c in await self.store.chunks(source_id, candidate_ids)}
         ranked = fuse(
             channels,
-            request.top_k,
+            90 if request.rerank else request.top_k,
             {c.id: f"{c.path}:{c.start_offset:010}" for c in chunks.values()},
         )
+        if request.rerank:
+            ranked = rerank(request.query, ranked, chunks, request.top_k)
         results: list[SearchHit] = []
         for item in ranked:
             c = chunks.get(item.chunk_id)
@@ -168,6 +172,7 @@ class SearchService:
             },
         )
         return SearchResponse(
+            reranker=RERANK_VERSION if request.rerank else "none",
             search_index_id=index_id,
             source_index_id=source_id,
             commit_sha=commit_sha,

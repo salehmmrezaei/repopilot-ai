@@ -54,6 +54,7 @@ jobs:
           RUN_QUEUE_TESTS: '1'
       - run: uv run python -m app.evaluation.retrieval --output evaluation/retrieval/reports/keyword.json
       - run: uv run python -m app.evaluation.retrieval --dataset evaluation/retrieval/typescript-v1 --output evaluation/retrieval/reports/typescript.json
+      - run: uv run python -m app.evaluation.retrieval --rerank --output evaluation/retrieval/reports/reranked.json
       - uses: actions/upload-artifact@v4
         with:
           name: keyword-retrieval-benchmark

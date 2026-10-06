@@ -4,6 +4,7 @@ import { createRepository, repositoryAction, type Repository } from './api';
 import { useRepositories } from './useRepositories';
 import { RepositoryForm } from './RepositoryForm';
 import { RepositoryCard } from './RepositoryCard';
+import { PullReviews } from '../reviews/PullReviews';
 import { FileBrowser } from './FileBrowser';
 interface Props {
   csrf: string;
@@ -32,7 +33,10 @@ export function RepositoryWorkspace({ csrf, onExpired }: Props) {
       setPending(null);
     }
   }
-  async function act(repo: Repository, action: 'retry' | 'cancel' | 'delete') {
+  async function act(
+    repo: Repository,
+    action: 'retry' | 'refresh' | 'cancel' | 'delete',
+  ) {
     if (
       action === 'delete' &&
       !window.confirm(
@@ -89,6 +93,13 @@ export function RepositoryWorkspace({ csrf, onExpired }: Props) {
             />
           ))}
         </div>
+      )}
+      {opened && (
+        <PullReviews
+          key={`reviews-${opened.id}`}
+          repositoryId={opened.id}
+          csrf={csrf}
+        />
       )}
       {opened && (
         <FileBrowser

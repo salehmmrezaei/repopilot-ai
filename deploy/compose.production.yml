@@ -1,0 +1,97 @@
+# Standalone single-host deployment. Set immutable image digests and secrets in .env.production.
+# docker compose --env-file .env.production -f deploy/compose.production.yml up -d
+x-env: &env
+  APP_DATABASE_URL: ${APP_DATABASE_URL:?required}
+  APP_REDIS_URL: redis://redis:6379/0
+  APP_ENVIRONMENT: production
+  APP_FRONTEND_ORIGIN: https://${DOMAIN:?required}
+  APP_COOKIE_SECURE: "true"
+  APP_GITHUB_OAUTH_ENABLED: ${APP_GITHUB_OAUTH_ENABLED:-false}
+  APP_GITHUB_CLIENT_ID: ${APP_GITHUB_CLIENT_ID:-}
+  APP_GITHUB_CLIENT_SECRET: ${APP_GITHUB_CLIENT_SECRET:-}
+  APP_GITHUB_TOKEN_KEY: ${APP_GITHUB_TOKEN_KEY:-}
+  APP_GITHUB_CALLBACK_URL: https://${DOMAIN}/api/auth/github/callback
+  APP_METRICS_TOKEN: ${APP_METRICS_TOKEN:?required}
+  APP_OPENAI_API_KEY: ${APP_OPENAI_API_KEY:-}
+  APP_ANSWERS_ENABLED: ${APP_ANSWERS_ENABLED:-false}
+  APP_EMBEDDINGS_ENABLED: ${APP_EMBEDDINGS_ENABLED:-false}
+  APP_AGENTS_ENABLED: ${APP_AGENTS_ENABLED:-false}
+  APP_EXECUTIONS_ENABLED: ${APP_EXECUTIONS_ENABLED:-false}
+  APP_REPAIRS_ENABLED: ${APP_REPAIRS_ENABLED:-false}
+  APP_SANDBOX_URL: ${APP_SANDBOX_URL:-https://sandbox.invalid}
+  APP_SANDBOX_TOKEN: ${APP_SANDBOX_TOKEN:-}
+x-app: &app
+  image: ${BACKEND_IMAGE:?set an immutable backend image digest}
+  environment: *env
+  restart: unless-stopped
+  read_only: true
+  tmpfs: [/tmp:size=64m,mode=1777]
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  mem_limit: 768m
+  cpus: 1.0
+  pids_limit: 128
+  depends_on:
+    migrate: {condition: service_completed_successfully}
+    redis: {condition: service_healthy}
+services:
+  postgres:
+    image: ${POSTGRES_IMAGE:?set an immutable pgvector pg17 image digest}
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?required}
+      POSTGRES_DB: ${POSTGRES_DB:?required}
+    volumes: [postgres:/var/lib/postgresql/data]
+    restart: unless-stopped
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  redis:
+    image: ${REDIS_IMAGE:?set an immutable redis image digest}
+    command: [redis-server, --appendonly, 'yes', --maxmemory, 256mb, --maxmemory-policy, noeviction]
+    volumes: [redis:/data]
+    restart: unless-stopped
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  migrate:
+    image: ${BACKEND_IMAGE}
+    environment: *env
+    command: [alembic, upgrade, head]
+    restart: 'no'
+    depends_on:
+      postgres: {condition: service_healthy}
+  backend:
+    <<: *app
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://localhost:8000/health/ready', timeout=5)"]
+      interval: 15s
+      timeout: 6s
+      retries: 5
+  worker:
+    <<: *app
+    command: [celery, -A, 'app.jobs.celery_app:celery_app', worker, --loglevel=WARNING, --concurrency=1]
+  dispatcher:
+    <<: *app
+    command: [python, -m, app.jobs.dispatcher]
+  frontend:
+    image: ${FRONTEND_IMAGE:?set an immutable frontend image digest}
+    restart: unless-stopped
+    depends_on:
+      backend: {condition: service_healthy}
+  edge:
+    image: ${CADDY_IMAGE:?set an immutable caddy image digest}
+    environment: {DOMAIN: '${DOMAIN}', ACME_EMAIL: '${ACME_EMAIL:?required}'}
+    ports: ['80:80', '443:443']
+    volumes: ['./Caddyfile:/etc/caddy/Caddyfile:ro', 'caddy:/data', 'caddy_config:/config']
+    restart: unless-stopped
+    depends_on: [frontend]
+volumes:
+  postgres:
+  redis:
+  caddy:
+  caddy_config:

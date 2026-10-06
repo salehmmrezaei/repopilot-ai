@@ -18,10 +18,13 @@ from app.api.routes.answers import router as answer_router
 from app.api.routes.auth import router as auth_router
 from app.api.routes.conversations import router as conversation_router
 from app.api.routes.executions import router as execution_router
+from app.api.routes.github import router as github_router
 from app.api.routes.health import router
 from app.api.routes.indexes import router as index_router
+from app.api.routes.metrics import router as metrics_router
 from app.api.routes.repairs import router as repair_router
 from app.api.routes.repositories import router as repository_router
+from app.api.routes.reviews import router as review_router
 from app.api.routes.run_events import router as run_event_router
 from app.api.routes.search import router as search_router
 from app.auth.passwords import hash_password
@@ -30,6 +33,7 @@ from app.auth.tokens import new_token
 from app.core.config import Settings
 from app.core.errors import install_error_handlers
 from app.core.logging import configure_logging
+from app.core.metrics import HttpMetrics
 from app.core.rate_limits import RedisRateLimiter
 from app.database.session import DatabaseProbe, create_engine
 from app.embeddings.factory import create_provider
@@ -68,9 +72,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     app = FastAPI(title="RepoPilot AI", version="0.1.0", lifespan=lifespan)
     app.state.settings = config
+    app.state.http_metrics = HttpMetrics()
     install_error_handlers(app)
     app.include_router(router)
     app.include_router(auth_router)
+    app.include_router(github_router)
+    app.include_router(review_router)
+    app.include_router(metrics_router)
     app.include_router(repository_router)
     app.include_router(index_router)
     app.include_router(search_router)
@@ -111,6 +119,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         response.headers["X-Request-ID"] = request_id
         response.headers["Cache-Control"] = "no-store"
         route = request.scope.get("route")
+        if getattr(route, "path", "") != "/metrics":
+            app.state.http_metrics.observe(
+                getattr(route, "path", "unmatched"), response.status_code, perf_counter() - started
+            )
         logger.info(
             "request_completed",
             extra={
