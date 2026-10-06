@@ -30,7 +30,12 @@ class IndexStore:
                     RepositoryIndex.import_job_id == source_id,
                     RepositoryIndex.status == "completed",
                 )
-                .order_by(RepositoryIndex.created_at.desc(), RepositoryIndex.id)
+                .order_by(
+                    RepositoryIndex.is_current.desc(),
+                    RepositoryIndex.finished_at.desc().nullslast(),
+                    RepositoryIndex.created_at.desc(),
+                    RepositoryIndex.id,
+                )
                 .limit(1)
             )
         ).one_or_none()
