@@ -289,3 +289,15 @@ The app permits repository test edits, so test success must never stand in for h
 review. The coding benchmark separately protects tests/configuration and labels reference
 verification independently of live-model results. No automatic repository write or PR is
 introduced. See milestone-11.md for operational acceptance and artifact retention.
+
+
+## TypeScript parsing (Milestone 12A)
+
+Source is parsed as data using pinned native grammars. No Node process, compiler, project
+configuration, npm hook or repository code is executed during indexing. File/native-time/
+node/depth/symbol/traversal bounds fall back to text with diagnostics. Native dependency
+code still requires worker process/container limits and maintenance. Source/docstrings
+remain untrusted and are rendered as escaped text. Exact symbol terms use parameterized
+SQL arrays; they are not interpolated into full-text query expressions. Index/search/tool
+versions prevent silently reusing incompatible generations. See milestone-12a.md for the
+native-timeout compatibility note and explicit rebuilding procedure.

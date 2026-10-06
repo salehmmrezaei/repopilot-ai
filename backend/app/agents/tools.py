@@ -1,10 +1,9 @@
 """Read only the pinned database snapshot, never the host filesystem."""
 
-import re
 from uuid import UUID, uuid5
 
 from pydantic import ValidationError
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.agents.contracts import ToolInput
@@ -105,22 +104,23 @@ class RepositoryTools:
             )
         )
         if action.tool == "find_symbol":
-            symbols = (
-                select(CodeSymbol.file_id, CodeSymbol.ordinal)
+            matching_symbol = (
+                select(CodeSymbol.id)
                 .where(
                     CodeSymbol.index_id == self.index_id,
+                    CodeSymbol.file_id == CodeChunk.file_id,
                     (CodeSymbol.name == query) | (CodeSymbol.qualified_name == query),
+                    or_(
+                        CodeSymbol.ordinal == CodeChunk.symbol_ordinal,
+                        CodeSymbol.start_line.between(CodeChunk.start_line, CodeChunk.end_line),
+                    ),
                 )
-                .subquery()
+                .exists()
             )
-            statement = statement.join(
-                symbols,
-                (CodeChunk.file_id == symbols.c.file_id)
-                & (CodeChunk.symbol_ordinal == symbols.c.ordinal),
-            )
+            statement = statement.where(matching_symbol)
         else:
-            if not re.fullmatch(r"[A-Za-z_][A-Za-z_0-9]{0,99}", query):
-                raise AppError("agent_tool_input", "References require one Python identifier.", 422)
+            if len(query) > 100 or not query.removeprefix("#").replace("$", "_").isidentifier():
+                raise AppError("agent_tool_input", "References require one source identifier.", 422)
             statement = statement.where(CodeChunk.content.contains(query, autoescape=True))
         rows = (
             await self.db.execute(

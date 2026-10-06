@@ -1,0 +1,15 @@
+{
+  "version": "typescript-retrieval-v1",
+  "cases": [
+    {"id":"ts-exact-method","query":"Catalog.findByPrefix","category":"qualified-symbol","relevant":["catalog.ts::Catalog.findByPrefix"]},
+    {"id":"ts-dollar-function","query":"$lookup","category":"identifier","relevant":["catalog.ts::$lookup"]},
+    {"id":"tsx-component","query":"Card","category":"component","relevant":["Card.tsx::Card"]},
+    {"id":"tsx-empty-state","query":"Which component displays no catalog entries?","category":"behavior","relevant":["Card.tsx::EmptyState"]},
+    {"id":"ts-interface","query":"LookupOptions","category":"interface","relevant":["catalog.ts::LookupOptions"]},
+    {"id":"ts-type-alias","query":"RecordId","category":"type","relevant":["catalog.ts::RecordId"]},
+    {"id":"ts-enum","query":"CatalogState","category":"enum","relevant":["catalog.ts::CatalogState"]},
+    {"id":"ts-namespace","query":"API.pathForUser","category":"namespace","relevant":["api.ts::API.pathForUser"]},
+    {"id":"ts-http-status","query":"Where is the successful HTTP status range checked?","category":"behavior","relevant":["api.ts::API.isSuccess"]},
+    {"id":"ts-copy-array","query":"Which method replaces catalog rows with a copy?","category":"behavior","relevant":["catalog.ts::Catalog.replace"]}
+  ]
+}

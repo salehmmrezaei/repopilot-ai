@@ -19,9 +19,11 @@ from app.core.config import Settings
 from app.core.rate_limits import MemoryRateLimiter
 from app.database.session import create_engine
 from app.embeddings.factory import create_provider
-from app.evaluation.fixtures import seed
+from app.evaluation.fixtures import read_corpus, seed
 from app.evaluation.metrics import recall_at_k, reciprocal_rank
 from app.evaluation.recording import RecordingCandidates
+from app.indexing.archive import LANGUAGES
+from app.indexing.pipeline import PIPELINE_VERSION, index_source
 from app.jobs.prepare_search import run_preparation
 from app.models import SearchIndex, User
 from app.repositories.search import SearchStore
@@ -48,20 +50,23 @@ class Dataset(BaseModel):
 
 
 async def benchmark(
-    settings: Settings, mode: str = "keyword", allow_paid: bool = False
+    settings: Settings,
+    mode: str = "keyword",
+    allow_paid: bool = False,
+    dataset_path: Path = DATASET,
 ) -> dict[str, object]:
     if not settings.database_url.get_secret_value().split("?")[0].endswith("_test"):
         raise ValueError("Evaluation requires a dedicated database whose name ends in _test")
     if mode == "hybrid" and (not allow_paid or not settings.embeddings_enabled):
         raise ValueError("Hybrid evaluation requires enabled embeddings and --allow-paid")
-    raw = (DATASET / "cases.json").read_bytes()
+    raw = (dataset_path / "cases.json").read_bytes()
     dataset = Dataset.model_validate_json(raw)
     engine = create_engine(settings)
     factory = async_sessionmaker(engine, expire_on_commit=False)
     user_id = uuid4()
     limiter = MemoryRateLimiter()
     try:
-        repo_id, corpus_hash = await seed(factory, DATASET / "corpus", user_id)
+        repo_id, corpus_hash = await seed(factory, dataset_path / "corpus", user_id)
         async with httpx.AsyncClient(trust_env=False) as client:
             provider = create_provider(settings, client) if mode == "hybrid" else None
             async with factory() as db:
@@ -131,6 +136,7 @@ async def benchmark(
                 "dataset_sha256": sha256(raw).hexdigest(),
                 "corpus_sha256": corpus_hash,
                 "pipeline_version": VERSION,
+                "source_pipeline_version": PIPELINE_VERSION,
                 "provider_profile": job.provider_profile,
                 "mode": mode,
                 "tiktoken_version": version("tiktoken"),
@@ -157,13 +163,56 @@ async def benchmark(
         await engine.dispose()
 
 
+def check_dataset(path: Path) -> dict[str, object]:
+    raw = (path / "cases.json").read_bytes()
+    dataset = Dataset.model_validate_json(raw)
+    if not dataset.cases or len({case.id for case in dataset.cases}) != len(dataset.cases):
+        raise ValueError("Require nonempty cases with unique identifiers")
+    files = read_corpus(path / "corpus")
+    labels = set()
+    symbol_count = chunk_count = 0
+    for name, content in files:
+        result = index_source(content, LANGUAGES[Path(name).suffix.lower()], name)
+        if result.diagnostic:
+            raise ValueError(f"Corpus parsing failed for {name}: {result.diagnostic}")
+        symbol_count += len(result.symbols)
+        chunk_count += len(result.chunks)
+        for chunk in result.chunks:
+            symbol = (
+                result.symbols[chunk.symbol_ordinal].qualified_name
+                if chunk.symbol_ordinal is not None
+                else "(module)"
+            )
+            labels.add(f"{name}::{symbol}")
+    for case in dataset.cases:
+        if not case.relevant or not case.relevant <= labels:
+            raise ValueError(f"Invalid relevance labels for {case.id}")
+    return {
+        "valid_cases": len(dataset.cases),
+        "files": len(files),
+        "symbols": symbol_count,
+        "chunks": chunk_count,
+        "dataset_sha256": sha256(raw).hexdigest(),
+        "source_pipeline_version": PIPELINE_VERSION,
+        "provider_calls": 0,
+    }
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--dataset", type=Path, default=DATASET)
+    parser.add_argument("--check", action="store_true")
     parser.add_argument("--mode", choices=["keyword", "hybrid"], default="keyword")
     parser.add_argument("--allow-paid", action="store_true")
-    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--output", type=Path)
     args = parser.parse_args()
-    report = asyncio.run(benchmark(Settings(), args.mode, args.allow_paid))
+    check = check_dataset(args.dataset)
+    if args.check:
+        print(json.dumps(check))
+        return
+    if args.output is None:
+        parser.error("--output is required for a database benchmark")
+    report = asyncio.run(benchmark(Settings(), args.mode, args.allow_paid, args.dataset))
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, indent=2) + "\n")
     print(json.dumps(report["metrics"], indent=2))

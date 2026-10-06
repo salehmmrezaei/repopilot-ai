@@ -433,3 +433,41 @@ paid model evaluation. The 17 skipped cases include the prior 12 infrastructure 
 one new PostgreSQL repair race and four real-sandbox coding reference cases. Docker is
 unavailable. A runnable dedicated runner and an explicitly authorized paid benchmark
 are required before reporting any real coding success rate. Follow milestone-11.md.
+
+## Milestone 12A implementation checks (2026-10-02)
+
+- Final backend suite: **343 passed, 18 skipped**, two existing Starlette/AnyIO
+  deprecation warnings. Ruff lint/format pass (235 files); strict mypy passes all
+  161 application modules.
+- TypeScript tests cover declaration kinds, lexical scopes, aliases, generics,
+  decorators, overloads, ambient declarations, TSX components, anonymous default exports,
+  Unicode and CRLF/CR/LF source coverage, exact chunk reconstruction, syntax fallback,
+  node/depth/time/symbol limits and conservative handling of unsupported computed members.
+- API/worker tests cover TSX persistence, search-document preparation, owner isolation,
+  declaration lookup for imports/properties/qualified/$ symbols, parser-version rebuild,
+  retention of older source generations and malformed-file diagnostics.
+- Full frontend suite: **66 passed** across 15 files. TypeScript, ESLint and Prettier
+  pass. Added checks cover the rebuild prompt and escaped TypeScript declaration/JSDoc UI.
+- Standard production minification still fails with native **Bus error / exit 135**,
+  as in earlier milestones. Unminified Vite bundling succeeds (150 modules). The normal
+  build configuration remains unchanged; production CI/Docker bundling is still a gate.
+- Offline migration SQL reaches the unchanged head **0015_repair_runs**. This release
+  adds no database migration. Dependency comparison confirms only two newly added packages:
+  tree-sitter 0.25.2 and tree-sitter-typescript 0.23.2; existing versions remain unchanged.
+- Free retrieval checks validate the unchanged 14-case Python fixture and the new
+  10-case TypeScript fixture (4 files, 21 symbols, 19 chunks), with zero provider calls.
+  TypeScript dataset SHA-256:
+  `4622e63b6bb962268936f412d7ca96d8c787a55ab5ed4d92d4f90457c631d7ac`.
+  Existing coding, investigation and proposal fixtures also validate without model calls.
+- Stress probes confirmed exact text fallback for a 4,000-declaration source and a
+  500-level nested expression; a long Unicode source retained exact bounded chunks.
+  A deliberately tiny native timeout safely triggered parser_timeout fallback.
+  The progress-callback API crashed during development and is not used; see ADR 0017.
+- The upgrade patch is checked/applied against the delivered Milestone 11 ZIP and the
+  resulting source compared to the packaged source. Final ZIP integrity is checked.
+
+Not executed here: actual PostgreSQL migration/drift, PostgreSQL/Redis/Celery integration,
+real TypeScript retrieval quality measurement, rootless Docker execution, browser acceptance,
+hosted CI or paid model evaluation. The 18 skipped cases include the previous 17 infrastructure
+cases and one new PostgreSQL TypeScript-symbol retrieval test. No retrieval-quality score,
+TypeScript compiler/type-check support or general TypeScript sandbox compatibility is claimed.

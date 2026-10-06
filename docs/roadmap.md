@@ -23,15 +23,20 @@ records the React + TypeScript + Vite change from the proposed Next.js frontend.
 9. Plans and patch proposals — implemented: pinned base, source-checked diffs and downloads.
 10. Isolated execution — implemented: separate runner, curated test environments.
     Deployment acceptance remains documented in milestone-10.md.
-11. Bounded repair loop and coding benchmark — implemented; see milestone-11.md
-    for PostgreSQL/runner/browser acceptance and separately authorized live evaluation.
-12. Extensions individually: TypeScript, OAuth/private repositories, reranking,
-    incremental indexing, PR review, deployment and deeper observability.
+11. Bounded repair loop and coding benchmark — implemented; user reported local completion.
+    See milestone-11.md for the separately authorized live evaluation procedure.
+12. Extensions individually:
+    - 12A: TypeScript/TSX static symbols, search and source browser — implemented;
+      see milestone-12a.md for validation and upgrade/rebuild instructions.
+    - 12B: incremental indexing — next, not yet implemented.
+    - Remaining extensions: OAuth/private repositories, reranking, PR review,
+      deployment and deeper observability — not yet implemented.
 
 Milestones 1–7 deliver the initial repository-understanding MVP. Evaluation starts
 with retrieval, background jobs start with import, and authorization starts before
 user repositories. No major milestone advances without a clear validation gate.
 
 Postponed after Milestone 7: React Query, Tailwind/shadcn, routing, local embedding adapter, learned reranking,
-invoice reconciliation and indexing/standalone-call receipts, successful-import refresh, code execution, email verification/recovery and OAuth.
+invoice reconciliation and indexing/standalone-call receipts, successful-import refresh, email verification/recovery and OAuth.
+Isolated execution was subsequently added in Milestone 10.
 These are intentionally absent, not stub implementations.

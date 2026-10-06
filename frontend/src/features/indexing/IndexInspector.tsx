@@ -52,9 +52,11 @@ export function IndexInspector({
             ? 'Saving…'
             : running
               ? 'Cancel indexing'
-              : state?.latest?.status === 'completed'
-                ? 'Check index'
-                : 'Build index'}
+              : state?.rebuild_available
+                ? 'Rebuild index'
+                : state?.latest?.status === 'completed'
+                  ? 'Check index'
+                  : 'Build index'}
         </button>
       </div>
       {(error || actionError) && (
@@ -65,10 +67,21 @@ export function IndexInspector({
       {!state && !error && <p role="status">Loading index status…</p>}
       {state && !state.latest && (
         <p>
-          Build a static index to inspect Python symbols and source chunks. No
-          AI API calls are needed.
+          Build a static index to inspect Python and TypeScript/TSX symbols and
+          source chunks. No AI API calls are needed.
         </p>
       )}
+      {state?.rebuild_available && (
+        <p role="status">
+          A newer parser is available. Rebuild the source index, then prepare
+          search again. Saved results retain their original source snapshots.
+        </p>
+      )}
+      <p className="field-help">
+        Static symbols: Python, TypeScript and TSX. Other imported languages use
+        text chunks. TypeScript indexing does not run type checking or install
+        dependencies.
+      </p>
       {state?.latest && (
         <p role="status">
           Index {state.latest.status} ·{' '}

@@ -89,7 +89,9 @@ async def run_index(
             diagnostics: list[dict[str, str]] = []
             await report_stage(factory, claim, "parsing", RepositoryIndex)
             for file in files:
-                result = await asyncio.to_thread(index_source, file.content, file.language)
+                result = await asyncio.to_thread(
+                    index_source, file.content, file.language, file.path
+                )
                 if (
                     len(symbols) + len(result.symbols) > 10000
                     or len(chunks) + len(result.chunks) > 10000

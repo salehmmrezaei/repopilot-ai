@@ -26,7 +26,7 @@ def configuration(settings: Settings, mode: str = "investigate") -> str:
         settings.answer_max_output_tokens,
         settings.answer_input_price_per_million,
         settings.answer_output_price_per_million,
-        "read-only-v1",
+        "read-only-v2",
         5,
         8000,
     ]

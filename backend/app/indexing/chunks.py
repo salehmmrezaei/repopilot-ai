@@ -7,7 +7,7 @@ from hashlib import sha256
 
 from app.indexing.parser import Symbol
 
-CHUNKER_VERSION = "source-bytes-v1"
+CHUNKER_VERSION = "source-bytes-v2"
 MAX_CHUNK_BYTES = 8192
 
 
@@ -32,9 +32,13 @@ def chunk_source(
     # Character offsets (not AST's UTF-8 byte columns). CRLF is preserved exactly.
     starts = [0, *(m.end() for m in re.finditer(r"\r\n|\r|\n", content))]
     regions: list[tuple[int, int, int]] = []
-    definition_parents = {s.parent for s in symbols if s.kind in {"class", "method"}}
+    definition_parents = {
+        s.parent
+        for s in symbols
+        if s.kind in {"class", "method", "function", "interface", "namespace"}
+    }
     for i, s in enumerate(symbols):
-        if s.kind not in {"function", "method", "class"}:
+        if s.kind not in {"function", "method", "class", "interface", "type", "enum", "namespace"}:
             continue
         ancestors: list[Symbol] = []
         parent = s.parent
@@ -44,7 +48,7 @@ def chunk_source(
         if any(a.kind in {"function", "method"} for a in ancestors):
             continue
         # Classes with nested definitions are represented by header/gap + child chunks.
-        if s.kind == "class" and i in definition_parents:
+        if s.kind in {"class", "interface", "namespace"} and i in definition_parents:
             continue
         regions.append(
             (

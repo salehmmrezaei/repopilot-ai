@@ -3,7 +3,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from app.retrieval.text import query_terms
+from app.retrieval.text import query_terms, symbol_terms
 
 
 class PrepareRequest(BaseModel):
@@ -19,7 +19,7 @@ class SearchRequest(PrepareRequest):
     @field_validator("query")
     @classmethod
     def usable_query(cls, value: str) -> str:
-        if not query_terms(value):
+        if not query_terms(value) and not symbol_terms(value):
             raise ValueError("query must contain searchable words or identifiers")
         return value.strip()
 

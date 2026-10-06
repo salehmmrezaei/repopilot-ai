@@ -58,12 +58,19 @@ export function IndexedFileDetails({ repositoryId, fileId, onExpired }: Props) {
     <div className="indexed-file">
       <h4>Index: {page.path}</h4>
       <p className="field-help">
-        Commit {page.commit_sha} · source lines are one-based; character offsets
-        use an exclusive end.
+        {page.language === 'typescript' &&
+        page.path.toLowerCase().endsWith('.tsx')
+          ? 'TypeScript / TSX'
+          : page.language}{' '}
+        · Commit {page.commit_sha} · source lines are one-based; character
+        offsets use an exclusive end.
       </p>
       <h5>Symbols</h5>
       {page.symbols.length === 0 ? (
-        <p>No Python symbols in this file.</p>
+        <p>
+          No extracted symbols on this page. Plain-text files and syntax
+          fallbacks still have searchable source chunks.
+        </p>
       ) : (
         <ul className="symbol-list">
           {page.symbols.map((symbol) => (
@@ -72,6 +79,17 @@ export function IndexedFileDetails({ repositoryId, fileId, onExpired }: Props) {
               <span>
                 {symbol.kind} · L{symbol.start_line}–{symbol.end_line}
               </span>
+              {(symbol.signature || symbol.docstring) && (
+                <details>
+                  <summary>Declaration details</summary>
+                  {symbol.signature && (
+                    <pre>
+                      <code>{symbol.signature}</code>
+                    </pre>
+                  )}
+                  {symbol.docstring && <pre>{symbol.docstring}</pre>}
+                </details>
+              )}
             </li>
           ))}
         </ul>

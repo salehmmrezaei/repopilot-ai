@@ -23,6 +23,8 @@ class IndexResponse(JobResponse):
 class IndexState(BaseModel):
     latest: IndexResponse | None
     active: IndexResponse | None
+    current_pipeline_version: str
+    rebuild_available: bool
 
 
 class SymbolResponse(BaseModel):
@@ -32,7 +34,18 @@ class SymbolResponse(BaseModel):
     ordinal: int
     name: str
     qualified_name: str
-    kind: Literal["class", "function", "method", "import", "variable"]
+    kind: Literal[
+        "class",
+        "function",
+        "method",
+        "import",
+        "variable",
+        "interface",
+        "type",
+        "enum",
+        "namespace",
+        "property",
+    ]
     signature: str | None
     docstring: str | None
     parent_ordinal: int | None

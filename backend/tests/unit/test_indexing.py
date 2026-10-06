@@ -68,7 +68,7 @@ def test_large_regions_and_long_unicode_lines_are_bounded(text: str) -> None:
 def test_oversized_file_rejected_and_other_languages_remain_text() -> None:
     with pytest.raises(ImportFailure, match="size limit"):
         index_source("x" * (256 * 1024 + 1), "python")
-    result = index_source("export function main() {}", "typescript")
+    result = index_source("export function main() {}", "javascript")
     assert not result.symbols and result.chunks[0].kind == "text"
 
 

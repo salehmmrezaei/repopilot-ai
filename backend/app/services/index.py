@@ -35,6 +35,8 @@ class IndexService:
         return IndexState(
             latest=IndexResponse.model_validate(latest) if latest else None,
             active=IndexResponse.model_validate(active) if active else None,
+            current_pipeline_version=PIPELINE_VERSION,
+            rebuild_available=bool(active and active.pipeline_version != PIPELINE_VERSION),
         )
 
     async def start(self, user_id: UUID, repository_id: UUID) -> tuple[IndexResponse, bool]:

@@ -14,7 +14,7 @@ from app.repositories.search import SearchStore
 from app.retrieval.context import build_context
 from app.retrieval.contracts import CandidateStore
 from app.retrieval.ranking import fuse
-from app.retrieval.text import VERSION, query_terms
+from app.retrieval.text import VERSION, query_terms, symbol_terms
 from app.schemas.search import SearchHit, SearchRequest, SearchResponse
 from app.services.search_preparation import PreparationService
 from app.services.usage_receipts import ReceiptWriter
@@ -73,7 +73,7 @@ class SearchService:
         terms = query_terms(request.query)
         channels = {
             "lexical": await self.candidates.lexical(index_id, terms),
-            "symbol": await self.candidates.symbols(index_id, terms),
+            "symbol": await self.candidates.symbols(index_id, symbol_terms(request.query)),
         }
         # Release the read transaction/connection before awaiting an external provider.
         await self.db.commit()

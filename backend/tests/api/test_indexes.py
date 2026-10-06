@@ -28,7 +28,9 @@ def imported(client: TestClient):
 
 def test_index_roundtrip_idempotence_paging_and_source(auth_client: TestClient) -> None:
     headers, repo, url = imported(auth_client)
-    assert auth_client.get(url).json() == {"latest": None, "active": None}
+    assert auth_client.get(url).json()["latest"] is None
+    assert auth_client.get(url).json()["active"] is None
+    assert auth_client.get(url).json()["rebuild_available"] is False
     queued = auth_client.post(url, json={}, headers=headers)
     assert queued.status_code == 202
     assert auth_client.post(url, json={}, headers=headers).status_code == 409

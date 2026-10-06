@@ -149,3 +149,87 @@ describe('source index', () => {
     );
   });
 });
+
+it('offers a parser upgrade without hiding the previous snapshot', async () => {
+  const active = { ...job, status: 'completed', stage: 'completed' };
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockResolvedValue(
+      json({
+        latest: active,
+        active,
+        rebuild_available: true,
+        current_pipeline_version: 'new-parser',
+      }),
+    ),
+  );
+  render(
+    <IndexInspector
+      repositoryId="repo"
+      fileId={null}
+      csrf="proof"
+      onExpired={() => {}}
+    />,
+  );
+  expect(
+    await screen.findByRole('button', { name: 'Rebuild index' }),
+  ).toBeEnabled();
+  expect(screen.getByText(/A newer parser is available/)).toHaveTextContent(
+    'prepare search again',
+  );
+  expect(screen.getByText(/1 files/)).toHaveTextContent('1 symbols');
+});
+
+it('shows TSX symbols, declaration metadata, and escaped documentation', async () => {
+  const active = { ...job, status: 'completed', stage: 'completed' };
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockImplementation((url: string) =>
+      Promise.resolve(
+        json(
+          url.includes('/files/')
+            ? {
+                index_id: job.id,
+                file_id: 'file',
+                path: 'Card.tsx',
+                language: 'typescript',
+                commit_sha: job.commit_sha,
+                symbols: [
+                  {
+                    id: 's1',
+                    ordinal: 0,
+                    qualified_name: 'CardProps',
+                    kind: 'interface',
+                    start_line: 1,
+                    end_line: 3,
+                    signature: 'export interface CardProps',
+                    docstring: '/** <script>untrusted()</script> */',
+                  },
+                ],
+                chunks: [],
+                next_symbol_offset: null,
+                next_chunk_offset: null,
+              }
+            : { latest: active, active },
+        ),
+      ),
+    ),
+  );
+  const { container } = render(
+    <IndexInspector
+      repositoryId="repo"
+      fileId="file"
+      csrf="proof"
+      onExpired={() => {}}
+    />,
+  );
+  expect(await screen.findByText('CardProps')).toBeInTheDocument();
+  expect(screen.getByText(/TypeScript \/ TSX · Commit/)).toBeInTheDocument();
+  expect(screen.getByText('interface · L1–3')).toBeInTheDocument();
+  fireEvent.click(screen.getByText('Declaration details'));
+  expect(screen.getByText('export interface CardProps')).toBeInTheDocument();
+  expect(
+    screen.getByText('/** <script>untrusted()</script> */'),
+  ).toBeInTheDocument();
+  expect(container.querySelector('script')).toBeNull();
+});

@@ -6,13 +6,18 @@ from uuid import UUID, uuid4
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from app.indexing.archive import LANGUAGES
 from app.indexing.pipeline import PIPELINE_VERSION
 from app.jobs.index_repository import run_index
 from app.models import ImportJob, Repository, RepositoryFile, RepositoryIndex, User
 
 
 def read_corpus(corpus: Path) -> list[tuple[str, str]]:
-    return [(path.name, path.read_text()) for path in sorted(corpus.glob("*.py"))]
+    return [
+        (path.relative_to(corpus).as_posix(), path.read_text())
+        for path in sorted(corpus.rglob("*"))
+        if path.is_file() and path.suffix.lower() in {".py", ".ts", ".tsx", ".mts", ".cts"}
+    ]
 
 
 async def seed(
@@ -51,7 +56,7 @@ async def seed(
                 repository_id=repo_id,
                 import_job_id=source_id,
                 path=path,
-                language="python",
+                language=LANGUAGES[Path(path).suffix.lower()],
                 content=content,
                 size=len(content.encode()),
                 content_hash=sha256(content.encode()).hexdigest(),

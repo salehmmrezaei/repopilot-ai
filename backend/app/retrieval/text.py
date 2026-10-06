@@ -1,6 +1,6 @@
 import re
 
-VERSION = "hybrid-v1"
+VERSION = "hybrid-v2"
 STOP = frozenset(
     (
         "a an the is are was where how what does do in of to for and or with "
@@ -32,3 +32,15 @@ def embedding_text(path: str, name: str | None, signature: str | None, content: 
         f"File: {path}\nSymbol: {name or '(module)'}\n"
         f"Signature: {signature or ''}\nCode:\n{content}"
     )
+
+
+def symbol_terms(query: str) -> list[str]:
+    """Exact identifier spellings for a bound SQL array, never a tsquery expression."""
+    names = []
+    for token in re.findall(r"#?[$\w]+(?:\.#?[$\w]+)*", query, re.UNICODE):
+        if all(
+            part.removeprefix("#").replace("$", "_").isidentifier() for part in token.split(".")
+        ):
+            if token.lower() not in STOP:
+                names.append(token.lower())
+    return list(dict.fromkeys([*names, *query_terms(query)]))[:24]

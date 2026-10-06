@@ -73,6 +73,8 @@ LANGUAGES = {
     ".jsx": "javascript",
     ".ts": "typescript",
     ".tsx": "typescript",
+    ".mts": "typescript",
+    ".cts": "typescript",
     ".md": "markdown",
     ".sql": "sql",
     ".json": "json",

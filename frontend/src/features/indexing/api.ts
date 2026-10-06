@@ -17,6 +17,8 @@ const indexSchema = z.object({
 const stateSchema = z.object({
   latest: indexSchema.nullable(),
   active: indexSchema.nullable(),
+  current_pipeline_version: z.string().optional(),
+  rebuild_available: z.boolean().default(false),
 });
 export type IndexState = z.infer<typeof stateSchema>;
 const fileSchema = z.object({
@@ -31,6 +33,8 @@ const fileSchema = z.object({
       ordinal: z.number(),
       qualified_name: z.string(),
       kind: z.string(),
+      signature: z.string().nullable().optional(),
+      docstring: z.string().nullable().optional(),
       start_line: z.number(),
       end_line: z.number(),
     }),

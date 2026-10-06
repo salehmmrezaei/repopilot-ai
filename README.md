@@ -1,10 +1,10 @@
 # RepoPilot AI
 
 A repository-understanding application that will grow into a controlled software
-engineering agent. **Current scope: Milestone 11, bounded automatic repair and coding benchmark implemented.**
+engineering agent. **Current scope: Milestone 12A, TypeScript/TSX static indexing and symbol search implemented.**
 React/TypeScript/Vite, FastAPI, PostgreSQL/pgvector, Redis, Celery, and a durable
 job dispatcher now support authenticated imports, progress, and basic source browsing.
-Static indexing, a React source/search inspector, keyword/symbol retrieval and optional
+Static Python and TypeScript/TSX indexing, a React source/search inspector, keyword/symbol retrieval and optional
 semantic retrieval and opt-in grounded answers with validated source references are available.
 Conversations save completed Q&A with source snapshots. Named conversations use durable
 background runs with reload recovery and bounded recent dialogue context. New claims
@@ -22,7 +22,7 @@ seed a reviewed revision proposal. An explicitly authorized repair loop can test
 up to twice, preserving every attempt, usage receipt and stop reason. Original repositories
 are never changed. A four-task coding benchmark produces JSON and an HTML dashboard.
 
-**Upgrading from Milestone 10?** Follow [the Milestone 11 guide](docs/milestone-11.md).
+**Upgrading from Milestone 11?** Follow [the Milestone 12A guide](docs/milestone-12a.md).
 The guide distinguishes source validation from tests and live model evaluation.
 It preserves your existing `.env`, users, sessions, and PostgreSQL volume.
 

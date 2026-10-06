@@ -197,3 +197,15 @@ external dependencies. Reference-verification mode is explicitly not a model-qua
 This is an in-memory tool fixture, not an end-to-end retrieval benchmark or held-out
 coding benchmark. Four tasks cannot establish production coding reliability. No live
 coding score or real-container fixture result was measured in this build environment.
+
+
+## Milestone 12A: TypeScript/TSX retrieval
+
+The original Python corpus/14-case labels are unchanged. A separate four-file, ten-case
+fixture is in `backend/evaluation/retrieval/typescript-v1`. It covers qualified functions,
+`$` names, interfaces, type aliases, enums, TSX components and behavior queries. The
+retrieval CLI accepts `--dataset` and `--check`; the latter validates parsing and labels
+without a database or provider call. Reports now include the source pipeline version as
+well as search pipeline version. See milestone-12a.md for actual PostgreSQL benchmark
+commands. Free structural checks and mocked candidates do not establish retrieval quality;
+no TypeScript retrieval score is claimed before the real benchmark is executed.
