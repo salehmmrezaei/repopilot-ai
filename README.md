@@ -10,9 +10,6 @@ test-and-repair workflows.
 
 ![RepoPilot AI product preview: a source-backed explanation of worker cancellation](docs/assets/product-preview.png)
 
-*Illustrative, AI-generated UI preview with source-verified content—not a screenshot or recorded AI response.
-[Visual provenance and screenshot capture guide](docs/assets/README.md).*
-
 ## Three capabilities
 
 - **Understand a repository.** Import pinned GitHub snapshots, index Python and TypeScript/TSX,
