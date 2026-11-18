@@ -1,61 +1,39 @@
-# Completion review — 6 October 2026
+# Validation and scope
 
-Reviewed commit: [6fcaab0d7cbd61cd38de80a745669090b12d2f38](https://github.com/salehmmrezaei/repopilot-ai/commit/6fcaab0d7cbd61cd38de80a745669090b12d2f38).
+The source implements repository import/refresh, Python and TypeScript/TSX indexing,
+search, cited answers, saved conversations, bounded investigations, patch proposals,
+sandbox validation, repair, GitHub OAuth/private access, saved PR reviews, and
+deployment/monitoring configuration.
 
-## Assessment
+## Recorded CI evidence
 
-The repository contains the implemented Milestone 1–12 source release. The latest
-reviewed main-branch [Quality checks run #65](https://github.com/salehmmrezaei/repopilot-ai/actions/runs/37426995740) completed successfully.
-This is evidence of an implemented, CI-validated project, not proof that every live
-integration or production operating procedure has been accepted.
+The existing review records a successful
+[GitHub Actions run #65 on 6 October 2026](https://github.com/salehmmrezaei/repopilot-ai/actions/runs/37426995740)
+at [commit `6fcaab0`](https://github.com/salehmmrezaei/repopilot-ai/commit/6fcaab0d7cbd61cd38de80a745669090b12d2f38).
 
-This review inspected the repository tree, roadmap, Milestone 12 boundaries,
-workflow definition and job logs, plus representative orchestration, lease,
-repair-policy, Compose and UI sources. It was not an exhaustive security audit,
-a new local test run or a live product session.
-
-## Independently observed CI evidence
-
-| Check | Result |
+| Check | Recorded result |
 | --- | --- |
-| Backend non-integration tests | 358 passed; 18 integration tests deselected; two upstream warnings |
-| Infrastructure integration suite | 12 passed; 6 skipped; 358 non-integration tests deselected |
-| Frontend | 69 tests passed in 16 files; type/lint/format checks and production build passed |
-| Backend static checks | Ruff lint/format passed; mypy passed for 173 source files |
-| Schema | Alembic upgrade, current revision and schema-drift check passed against CI PostgreSQL |
-| Retrieval | Free keyword, TypeScript and reranked benchmark commands completed; report artifact uploaded |
-| Packaging | Backend and frontend Docker image builds passed |
+| Backend unit/API tests | 358 passed |
+| PostgreSQL/pgvector and Redis integration | 12 passed; six sandbox tests skipped |
+| Frontend | 69 tests across 16 files passed; checks and production build passed |
+| Backend static checks | Ruff lint/format and mypy passed |
+| Database | Migration to head and schema-drift check passed |
+| Retrieval | Keyword, TypeScript, and reranked benchmark commands completed |
+| Packaging | Backend and frontend Docker builds passed |
 
-The workflow enables `RUN_DB_TESTS` and `RUN_QUEUE_TESTS`, but not
-`RUN_SANDBOX_TESTS`. The six skipped cases are the opt-in Docker isolation and
-coding-sandbox cases. Green CI does not certify those sandbox boundaries.
-Successful benchmark execution alone is not a claim of superior retrieval or model accuracy.
+These historical results are retained from the project review. They are not a new
+test run, a coverage percentage, or an AI-quality score. The
+[CI workflow](../.github/workflows/ci.yml) and [local commands](setup.md#quality-checks)
+define reproducible checks.
 
-## Remaining acceptance evidence
+## Environment checks still needed
 
-- **Sandbox:** run the opt-in isolation and coding cases on the configured dedicated
-  rootless-Docker host; verify baseline/patched execution and limits.
-- **GitHub:** verify real OAuth callback, private repository permissions,
-  disconnect/reconnect and owner-scoped access in the configured environment.
-- **Models:** record real grounded answers, PR review and explicitly authorized
-  paid evaluation results; current CI uses portable provider fixtures for these paths.
-- **Deployment:** verify domain/TLS, production migrations, backup/restore,
-  monitoring and recovery on the actual host.
-- **Product demonstration:** capture a real application screenshot or short GIF.
-  The README currently uses an explicitly labelled generated illustration.
+- **Sandbox:** run isolation/coding cases and baseline/patched validation on the dedicated host.
+- **GitHub:** verify real OAuth callbacks, private permissions, and disconnect/reconnect.
+- **Models:** review actual grounded answers, PR findings, and paid evaluation reports.
+- **Operations:** verify HTTPS, migrations, backup/restore, monitoring, and recovery on the target host.
+- **Demo:** replace the labelled generated preview with an actual application capture when available.
 
-These gates are documented in [Milestone 12](milestone-12.md),
-[execution](milestone-10.md), [repair](milestone-11.md),
-[deployment operations](deployment-operations.md) and the
-[historical validation record](validation.md).
-
-## Intentional scope limits
-
-The agent is bounded to five model calls; proposals are review artifacts, not
-automatic GitHub writes. Test execution requires explicit approval and configured
-curated environments. Local reranking is deterministic, not a learned cross-encoder.
-PR reviews are bounded saved snapshots and are not posted to GitHub.
-
-The [roadmap](roadmap.md) separately lists postponed features such as email
-verification/recovery and learned reranking. Those are future scope, not evidence
-that the delivered milestone source is absent.
+Patches and PR reviews require human review. The application does not push changes
+or post reviews. Email verification/recovery, learned reranking, automatic cleanup
+of old source generations, and unrestricted execution environments are outside the current scope.

@@ -3,8 +3,8 @@
 `deploy/compose.production.yml` is a standalone single-host Compose deployment,
 not an override of the development file. It includes PostgreSQL/pgvector, Redis,
 API, worker, dispatcher, frontend and Caddy TLS ingress. Only ports 80/443 are
-published. The sandbox runner remains on a separate dedicated host as documented
-in Milestone 10. Do not add a Docker socket to the API or worker.
+published. The sandbox runner stays on a [separate dedicated host](sandbox.md).
+Do not add a Docker socket to the API or worker.
 
 ## Prepare
 
